@@ -32,6 +32,24 @@ app.get('/programas-acreditados', async (req, res) => {
   }
 });
 
+app.get('/horario-atencion', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL);
+    const $ = cheerio.load(data);
+
+    const horarioTexto = $('#horario p').text().trim();
+
+    // Extraer solo el texto después de "Horario de atención:"
+    const match = horarioTexto.match(/Horario de atenci[oó]n:\s*(.*?)(\||$)/i);
+    const horario = match ? match[1].trim() : 'No se encontró el horario.';
+
+    res.json({ horario });
+  } catch (error) {
+    console.error('Error al obtener el horario:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener el horario de atención.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`API corriendo en http://localhost:${port}`);
 });
