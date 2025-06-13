@@ -9,35 +9,6 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-// ================== BOTPRESS PROXY ==================
-app.post('/chat', async (req, res) => {
-  const userText = req.body.text;
-
-  try {
-  const response = await fetch('https://api.botpress.cloud/v1/chat/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer 3d6f8d46-3bcd-46eb-8c70-1c75b77421c2' // <-- con Bearer
-    },
-    body: JSON.stringify({
-      botId: '3fffa794-29fc-469d-a1b8-542be6dee914',         // <-- Tu bot ID correcto
-      userId: '11111111-1111-1111-1111-111111111111',         // <-- Un UUID válido (puede ser estático)
-      type: 'text',
-      payload: userText                                     // <-- Este es el mensaje del usuario
-    })
-  });
-
-  const data = await response.json();
-  res.json(data);
-
-} catch (error) {
-  console.error('Error al conectar con Botpress:', error.message);
-  res.status(500).json({ error: 'Error al comunicarse con el bot' });
-}
-
-});
-
 
 const URL = 'https://www.unipamplona.edu.co';
 
