@@ -55,7 +55,7 @@ app.get('/horario-atencion', async (req, res) => {
 
 app.get('/director-programa', async (req, res) => {
   try {
-    const { data } = await axios.get(URL1);
+    const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
     let director = '';
@@ -63,37 +63,37 @@ app.get('/director-programa', async (req, res) => {
     let horario = '';
     let imagen = '';
 
-    // Buscar todos los <td> que contienen la información
-    $('td').each((i, el) => {
-      const html = $(el).html();
+    // Buscar el encabezado con texto "Dirección"
+    const heading = $('h3').filter((i, el) => $(el).text().includes('Dirección')).first();
 
-      if (html.includes('Director de Programa')) {
-        const textoPlano = $(el).text().replace(/\s+/g, ' ').trim();
+    if (heading.length) {
+      const tabla = heading.next('table');
+      const primeraFila = tabla.find('tr').first();
 
-        // Extraer datos de texto
-        const directorMatch = textoPlano.match(/Director de Programa\s*(.*?)\s*[\w.-]+@[\w.-]+/);
-        const correoMatch = textoPlano.match(/([\w.-]+@[\w.-]+)/);
-        const horarioMatch = textoPlano.match(/Horario de atención:\s*(.*)/i);
+      const columnaTexto = primeraFila.find('td').first();
+      const columnaImagen = primeraFila.find('td').eq(1);
 
-        director = directorMatch ? directorMatch[1].trim() : '';
-        correo = correoMatch ? correoMatch[1].trim() : '';
-        horario = horarioMatch ? horarioMatch[1].trim() : '';
+      const textos = columnaTexto.text().split('\n').map(t => t.trim()).filter(Boolean);
 
-        // Extraer la imagen del siguiente <td> (si está al lado)
-        const nextTd = $(el).next('td');
-        const imgSrc = nextTd.find('img').attr('src');
-        if (imgSrc) {
-          imagen = imgSrc.startsWith('http') ? imgSrc : `${URL}${imgSrc}`;
-        }
+      // Extraer los valores
+      director = textos[1] || '';
+      correo = textos[2] || '';
+      horario = textos[4] || '';
+
+      // Extraer imagen
+      const imgSrc = columnaImagen.find('img').attr('src');
+      if (imgSrc) {
+        imagen = imgSrc.startsWith('http') ? imgSrc : `${URL}${imgSrc}`;
       }
-    });
+    }
 
     res.json({ director, correo, horario, imagen });
   } catch (error) {
-    console.error('Error al obtener datos del director:', error.message);
+    console.error('Error al obtener los datos del director:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información del director.' });
   }
 });
+
 
 
 
