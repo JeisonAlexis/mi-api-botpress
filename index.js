@@ -174,6 +174,10 @@ app.get('/profesores-sistemas', async (req, res) => {
     console.error('❌ Error al obtener profesores:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
+
+  const { data } = await axios.get(URL2);
+console.log('🔍 Contenido recibido:', data.substring(0, 500)); // solo muestra los primeros caracteres
+
 });
 
 
