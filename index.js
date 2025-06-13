@@ -142,32 +142,30 @@ app.get('/profesores-sistemas', async (req, res) => {
 
     const tablas = h1.nextAll('table');
 
-    tablas.each((t, tablaHTML) => {
-      $(tablaHTML).find('tr').each((i, fila) => {
-        const celdas = $(fila).find('td');
+    tablas.each((_, tabla) => {
+      $(tabla).find('tr').each((_, fila) => {
+        const tds = $(fila).find('td');
+        if (tds.length !== 4) return;
 
-        // Procesar de 2 en 2 profesores
-        for (let j = 0; j < celdas.length; j += 2) {
-          const tdInfo = $(celdas[j]);
-          const tdImg = $(celdas[j + 1]);
+        for (let i of [0, 2]) {
+          const tdTexto = $(tds[i]);
+          const tdImagen = $(tds[i + 1]);
 
-          if (!tdInfo || !tdInfo.text().trim()) continue;
-
-          const nombre = tdInfo.find('strong').first().text().trim();
-          const texto = tdInfo.text().replace(/\s+/g, ' ').trim();
+          const nombre = tdTexto.find('strong').first().text().trim();
+          const texto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
           const resolucion = texto.match(/Resoluci[oó]n\s*[^.]+/)?.[0]?.trim() || '';
           const cargo = texto.match(/Profesor[a]? [^<\n]+/)?.[0]?.trim() || '';
           const correo = texto.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || '';
           const campus = texto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
-          const cvlac = tdInfo.find('a[href*="cvlac"]').attr('href') || '';
+          const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
 
-          const imgSrc = tdImg.find('img').attr('src') || '';
+          const imgSrc = tdImagen.find('img').attr('src') || '';
           const imagen = imgSrc.startsWith('http')
             ? imgSrc
             : imgSrc.startsWith('data:')
-            ? '' // ignorar imagen base64
-            : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+              ? ''
+              : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
 
           if (nombre) {
             profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
@@ -183,6 +181,7 @@ app.get('/profesores-sistemas', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
 });
+
 
 
 
