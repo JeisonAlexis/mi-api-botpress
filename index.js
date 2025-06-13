@@ -142,9 +142,14 @@ app.get('/profesores-sistemas', async (req, res) => {
 
     const tablas = h1.nextAll('table');
 
-    tablas.each((_, tabla) => {
-      $(tabla).find('tr').each((_, fila) => {
+    tablas.each((tIndex, tabla) => {
+      console.log(`➡️ Analizando tabla #${tIndex}`);
+      const filas = $(tabla).find('tr');
+
+      filas.each((fIndex, fila) => {
         const tds = $(fila).find('td');
+        console.log(`  📄 Fila #${fIndex} con ${tds.length} <td>`);
+
         if (tds.length !== 4) return;
 
         for (let i of [0, 2]) {
@@ -167,6 +172,8 @@ app.get('/profesores-sistemas', async (req, res) => {
               ? ''
               : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
 
+          console.log(`    👤 Profesor detectado: ${nombre}`);
+
           if (nombre) {
             profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
           }
@@ -181,6 +188,7 @@ app.get('/profesores-sistemas', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
 });
+
 
 
 
