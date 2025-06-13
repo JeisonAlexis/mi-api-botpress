@@ -130,7 +130,6 @@ app.get('/profesores-sistemas', async (req, res) => {
     const $ = cheerio.load(data);
     const profesores = [];
 
-    // Buscar el encabezado correcto
     const h1 = $('h1').filter((i, el) =>
       $(el).text().toLowerCase().includes('docentes tiempo completo')
     ).first();
@@ -140,57 +139,55 @@ app.get('/profesores-sistemas', async (req, res) => {
       return res.status(404).json({ error: 'Encabezado no encontrado' });
     }
 
-    // Buscar la tabla asociada al encabezado
-    const tabla = h1.nextAll('table').first(); // Ajusta según la estructura real
+    console.log('✅ h1 encontrado:', h1.text());
 
-    if (!tabla.length) {
-      console.warn('⚠️ No se encontró la tabla después del <h1>');
-      return res.status(404).json({ error: 'Tabla no encontrada' });
-    }
+    const tablas = h1.nextAll('table');
+    console.log(`✅ Se encontraron ${tablas.length} tablas después del <h1>`);
 
-    // Iterar sobre las filas de la tabla
-    const filas = tabla.find('tr');
-    filas.each((fIndex, fila) => {
-      const tds = $(fila).find('td');
-      
-      // Solo procesar filas con 4 celdas (2 profesores por fila)
-      if (tds.length !== 4) return;
+    tablas.each((tIndex, tabla) => {
+      console.log(`➡️ Analizando tabla #${tIndex}`);
+      const filas = $(tabla).find('tr');
 
-      // Procesar cada par de celdas (texto e imagen)
-      for (let i = 0; i < tds.length; i += 2) {
-        const tdTexto = $(tds[i]);
-        const tdImagen = $(tds[i + 1]);
+      filas.each((fIndex, fila) => {
+        const tds = $(fila).find('td');
+        console.log(`  📄 Fila #${fIndex} con ${tds.length} <td>`);
 
-        // Extraer datos del profesor
-        const nombre = tdTexto.find('strong').first().text().trim();
-        const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
+        if (tds.length !== 4) return;
 
-        // Extraer resolución, cargo, correo y campus
-        const resolucion = textoCompleto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
-        const cargo = textoCompleto.match(/Profesor[a]? [^<\n]+/i)?.[0]?.trim() || '';
-        const correo = textoCompleto.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
-        const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
-        const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+        for (let i of [0, 2]) {
+          const tdTexto = $(tds[i]);
+          const tdImagen = $(tds[i + 1]);
 
-        // Extraer imagen
-        const imgSrc = tdImagen.find('img').attr('src') || '';
-        const imagen = imgSrc.startsWith('http')
-          ? imgSrc
-          : imgSrc.startsWith('data:')
-            ? ''
-            : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+          const nombre = tdTexto.find('strong').first().text().trim();
+          const texto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
-        // Agregar profesor al arreglo
-        if (nombre) {
-          profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
+          const resolucion = texto.match(/Resoluci[oó]n\s[^.]+/)?.[0]?.trim() || '';
+          const cargo = texto.match(/Profesor[a]? [^<\n]+/)?.[0]?.trim() || '';
+          const correo = texto.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || '';
+          const campus = texto.match(/Campus:\s([\w\s]+)/i)?.[1]?.trim() || '';
+          const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+
+          const imgSrc = tdImagen.find('img').attr('src') || '';
+          const imagen = imgSrc.startsWith('http')
+            ? imgSrc
+            : imgSrc.startsWith('data:')
+              ? ''
+              : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+
+          console.log(`    👤 Profesor detectado: ${nombre}`);
+
+          if (nombre) {
+            profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
+          }
         }
-      }
+      });
     });
 
+    console.log(`✅ Se encontraron ${profesores.length} profesores`);
     res.json(profesores);
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener la información.' });
+    console.error('❌ Error al obtener profesores:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
 });
 
