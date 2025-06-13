@@ -12,7 +12,7 @@ app.use(express.json());
 // Cambia esta URL por la real de tu universidad
 const URL = 'https://www.unipamplona.edu.co';
 
-const URL1 = 'https://www.unipamplona.edu.co';
+const URL1 = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/22072013/01_elprograma.jsp';
 
 
 app.get('/programas-acreditados', async (req, res) => {
