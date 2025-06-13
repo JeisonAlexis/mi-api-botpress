@@ -140,7 +140,7 @@ app.get('/profesores-sistemas', async (req, res) => {
 
     console.log('✅ h1 encontrado:', h1.text());
 
-    const tabla = h1.nextAll('table').first();
+    const tabla = $('h1:contains("Docentes Tiempo Completo")').nextAll('div').find('table').first();
     if (!tabla.length) {
       console.warn('⚠️ No se encontró la tabla después del <h1>');
       return res.status(404).json({ error: 'Tabla no encontrada' });
