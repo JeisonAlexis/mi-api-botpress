@@ -91,6 +91,8 @@ const pHorario = tdTexto.find('p').filter((i, el) =>
   $(el).html()?.toLowerCase().includes('horario de atenci&oacute;n')
 ).first();
 
+console.log('🔍 tdTexto HTML:\n', tdTexto.html());
+
 if (pHorario && pHorario.length) {
   const raw = pHorario.html();
   console.log('💬 HTML del horario:', raw); // <-- Agrega esto para ver si se está obteniendo correctamente
@@ -103,6 +105,7 @@ if (pHorario && pHorario.length) {
 } else {
   console.warn('⚠️ No se encontró el párrafo con el horario');
 }
+
 
 
 
