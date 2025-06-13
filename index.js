@@ -9,7 +9,7 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Cambia esta URL por la real de tu universidad
+
 const URL = 'https://www.unipamplona.edu.co';
 
 const URL1 = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/22072013/01_elprograma.jsp';
@@ -24,7 +24,7 @@ app.get('/programas-acreditados', async (req, res) => {
 
     const programas = [];
 
-    // Extraer todos los <li> dentro de la clase listaprogramas
+    
     $('.listaprogramas li').each((i, el) => {
       const texto = $(el).text().trim();
       programas.push(texto);
@@ -44,7 +44,7 @@ app.get('/horario-atencion', async (req, res) => {
 
     const horarioTexto = $('#horario p').text().trim();
 
-    // Extraer solo el texto después de "Horario de atención:"
+   
     const match = horarioTexto.match(/Horario de atenci[oó]n:\s*(.*?)(\||$)/i);
     const horario = match ? match[1].trim() : 'No se encontró el horario.';
 
@@ -65,21 +65,21 @@ app.get('/director-programa', async (req, res) => {
     let horario = '';
     let imagen = '';
 
-    // Buscar el encabezado que contiene la palabra "dirección"
+    
     const direccion = $('h3').filter((i, el) =>
       $(el).text().toLowerCase().includes('dirección')
     ).first();
 
     if (direccion.length) {
-      const tabla = direccion.nextAll('table').first();       // Buscar la tabla cercana
-      const fila = tabla.find('tr').first();                  // Primera fila
+      const tabla = direccion.nextAll('table').first();       
+      const fila = tabla.find('tr').first();                  
 
-      const tdTexto = fila.find('td').first();                // Celda de texto
-      const tdImagen = fila.find('td').eq(1);                 // Celda con imagen
+      const tdTexto = fila.find('td').first();                
+      const tdImagen = fila.find('td').eq(1);                 
 
-      const rawHTML = tdTexto.html();                         // Obtener HTML puro
+      const rawHTML = tdTexto.html();                         
 
-      // Extraer director y correo usando expresiones regulares
+     
       const regexDirector = /<strong>Director de Programa<\/strong><br\s*\/?>(.*?)<br\s*\/?>/i;
       const regexCorreo = /<br\s*\/?>([\w.-]+@[\w.-]+\.\w+)/i;
 
@@ -89,23 +89,23 @@ app.get('/director-programa', async (req, res) => {
       director = matchDirector ? matchDirector[1].trim() : '';
       correo = matchCorreo ? matchCorreo[1].trim() : '';
 
-      // Extraer el párrafo que contiene el horario de atención
+      
       const pHorario = tdTexto.find('p').filter((i, el) =>
         $(el).text().toLowerCase().includes('horario de atención')
       ).first();
 
       if (pHorario && pHorario.length) {
-        const raw = pHorario.html();                          // Obtener HTML del párrafo
+        const raw = pHorario.html();                          
 
         // Limpiar y formatear el horario
         const afterStrong = raw.split('</strong>')[1] || '';
         horario = afterStrong
-          .replace(/<br\s*\/?>/gi, '\n')                      // Reemplazar <br> por saltos de línea
-          .replace(/<[^>]*>/g, '')                            // Eliminar cualquier otra etiqueta HTML
+          .replace(/<br\s*\/?>/gi, '\n')                      
+          .replace(/<[^>]*>/g, '')                            
           .trim();
       }
 
-      // Obtener imagen
+      
       const img = tdImagen.find('img').attr('src');
       if (img) {
         const base = URL1.split('/unipamplona')[0];
@@ -113,7 +113,7 @@ app.get('/director-programa', async (req, res) => {
       }
     }
 
-    // Enviar respuesta
+    
     res.json({ director, correo, horario, imagen });
 
   } catch (error) {
@@ -125,47 +125,53 @@ app.get('/director-programa', async (req, res) => {
 
 app.get('/profesores-sistemas', async (req, res) => {
   try {
-    const { data } = await axios.get(URL2); // Cambia esto por la URL real
+    const { data } = await axios.get(URL2); // 🔁 Usa la URL real aquí
     const $ = cheerio.load(data);
-
     const profesores = [];
 
-    const encabezado = $('h1').filter((i, el) =>
+    const h1 = $('h1').filter((i, el) =>
       $(el).text().toLowerCase().includes('docentes tiempo completo')
     ).first();
 
-    if (!encabezado.length) {
+    if (!h1.length) {
       return res.status(404).json({ error: 'No se encontró el encabezado de docentes.' });
     }
 
-    const tabla = encabezado.nextAll('table').first();
-    const celdas = tabla.find('td');
+    const tabla = h1.nextAll('table').first();
+    const filas = tabla.find('tr');
 
-    celdas.each((i, el) => {
-      const td = $(el);
-      const html = td.html();
-      const texto = td.text();
+    filas.each((i, fila) => {
+      const tds = $(fila).find('td');
 
-      const nombreMatch = texto.match(/(M\.Sc\.|Dra\.|Dr\.|Mg\.|Ph\.D\.|Ing\.)?\s*([^\n<]+)/);
-      const resolucionMatch = texto.match(/Resolución\s*([\w\s.-]+)/i);
-      const cargoMatch = texto.match(/Profesor[^\n<]+/i);
-      const correoMatch = texto.match(/([\w.-]+@[\w.-]+\.\w+)/);
-      const campusMatch = texto.match(/Campus:\s*(\w+)/i);
-      const urlCvLAC = td.find('a[href*="cvlac"]').attr('href');
+      // Asegura que haya al menos 2 columnas: texto y foto
+      if (tds.length < 2) return;
 
-      profesores.push({
-        nombre: nombreMatch ? nombreMatch[0].trim() : '',
-        resolucion: resolucionMatch ? resolucionMatch[1].trim() : '',
-        cargo: cargoMatch ? cargoMatch[0].trim() : '',
-        correo: correoMatch ? correoMatch[1].trim() : '',
-        campus: campusMatch ? campusMatch[1].trim() : '',
-        cvlac: urlCvLAC ? urlCvLAC.trim() : ''
-      });
+      const tdTexto = $(tds[0]);
+      const tdImagen = $(tds[1]);
+
+      const nombre = tdTexto.find('strong').first().text().trim();
+
+      const texto = tdTexto.text().replace(/\s+/g, ' ').trim();
+
+      const resolucion = texto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
+      const cargo = texto.match(/Profesor[a]? [^<\n]+/)?.[0]?.trim() || '';
+      const correo = texto.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || '';
+      const campus = texto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
+      const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+
+      const imgSrc = tdImagen.find('img').attr('src') || '';
+      const imagen = imgSrc.startsWith('http')
+        ? imgSrc
+        : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+
+      if (nombre) {
+        profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
+      }
     });
 
     res.json(profesores);
   } catch (error) {
-    console.error('❌ Error al obtener los profesores:', error.message);
+    console.error('❌ Error al obtener profesores:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
 });
