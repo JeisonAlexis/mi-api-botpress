@@ -78,7 +78,7 @@ app.get('/director-programa', async (req, res) => {
 
       const regexDirector = /<strong>Director de Programa<\/strong><br\s*\/?>(.*?)<br\s*\/?>/i;
       const regexCorreo = /<br\s*\/?>([\w.-]+@[\w.-]+\.\w+)/i;
-      const regexHorario = /Horario de atenci&oacute;n:<\/strong><br\s*\/?>(.*?)<\/p>/i;
+      const regexHorario = /Horario de atenci&oacute;n:<\/strong>(.*?)<\/p>/is;
 
       const matchDirector = rawHTML.match(regexDirector);
       const matchCorreo = rawHTML.match(regexCorreo);
@@ -86,7 +86,8 @@ app.get('/director-programa', async (req, res) => {
 
       director = matchDirector ? matchDirector[1].trim() : '';
       correo = matchCorreo ? matchCorreo[1].trim() : '';
-      horario = matchHorario ? matchHorario[1].replace(/<br\s*\/?>/g, '\n').trim() : '';
+      horario = matchHorario ? matchHorario[1].replace(/<br\s*\/?>/gi, '\n').trim() : '';
+
 
       const img = tdImagen.find('img').attr('src');
       if (img) {
