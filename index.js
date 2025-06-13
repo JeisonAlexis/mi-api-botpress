@@ -55,7 +55,7 @@ app.get('/horario-atencion', async (req, res) => {
 
 app.get('/director-programa', async (req, res) => {
   try {
-    const { data } = await axios.get(URL);
+    const { data } = await axios.get(URL1);
     const $ = cheerio.load(data);
 
     // Buscar el <p> que contiene el texto "Director de Programa"
