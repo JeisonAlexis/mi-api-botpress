@@ -142,36 +142,32 @@ app.get('/profesores-sistemas', async (req, res) => {
 
     const tablas = h1.nextAll('table');
 
-    tablas.each((t, tablaHTML) => {
-      const filas = $(tablaHTML).find('tr');
+    filas.each((i, fila) => {
+  const tds = $(fila).find('td');
 
-      filas.each((i, fila) => {
-        const tds = $(fila).find('td');
+  for (let j = 0; j < tds.length; j += 2) {
+    const tdTexto = $(tds[j]);
+    const tdImagen = $(tds[j + 1]);
 
-        for (let j = 0; j < tds.length; j += 2) {
-          const tdImagen = $(tds[j]);
-          const tdTexto = $(tds[j + 1]);
+    const nombre = tdTexto.find('strong').first().text().trim();
+    const texto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
-          const nombre = tdTexto.find('strong, b').first().text().trim();
-          const texto = tdTexto.text().replace(/\s+/g, ' ').trim();
+    const resolucion = texto.match(/Resoluci[oó]n\s*[^.]+/)?.[0]?.trim() || '';
+    const cargo = texto.match(/Profesor[a]? [^<\n]+/)?.[0]?.trim() || '';
+    const correo = texto.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || '';
+    const campus = texto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
+    const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+    const imgSrc = tdImagen.find('img').attr('src') || '';
+    const imagen = imgSrc.startsWith('http')
+      ? imgSrc
+      : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
 
-          const resolucion = texto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
-          const cargo = texto.match(/Profesor[a]?[^-–—\n]+/)?.[0]?.trim() || '';
-          const correo = texto.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || '';
-          const campus = texto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
-          const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+    if (nombre) {
+      profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
+    }
+  }
+});
 
-          const imgSrc = tdImagen.find('img').attr('src') || '';
-          const imagen = imgSrc.startsWith('http')
-            ? imgSrc
-            : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
-
-          if (nombre) {
-            profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
-          }
-        }
-      });
-    });
 
     console.log(`✅ Se encontraron ${profesores.length} profesores`);
     res.json(profesores);
