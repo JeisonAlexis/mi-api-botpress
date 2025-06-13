@@ -125,7 +125,7 @@ app.get('/director-programa', async (req, res) => {
 
 app.get('/profesores-sistemas', async (req, res) => {
   try {
-    const { data } = await axios.get(URL2); // 🔁 Usa la URL real aquí
+    const { data } = await axios.get(URL2); // Asegúrate de que URL2 esté definido
     const $ = cheerio.load(data);
     const profesores = [];
 
@@ -134,23 +134,33 @@ app.get('/profesores-sistemas', async (req, res) => {
     ).first();
 
     if (!h1.length) {
-      return res.status(404).json({ error: 'No se encontró el encabezado de docentes.' });
+      console.warn('⚠️ No se encontró el <h1> con "Docentes Tiempo Completo"');
+      return res.status(404).json({ error: 'Encabezado no encontrado' });
     }
 
+    console.log('✅ h1 encontrado:', h1.text());
+
     const tabla = h1.nextAll('table').first();
+    if (!tabla.length) {
+      console.warn('⚠️ No se encontró la tabla después del <h1>');
+      return res.status(404).json({ error: 'Tabla no encontrada' });
+    }
+
     const filas = tabla.find('tr');
+    console.log(`🔍 Número de filas: ${filas.length}`);
 
     filas.each((i, fila) => {
       const tds = $(fila).find('td');
-
-      // Asegura que haya al menos 2 columnas: texto y foto
+      console.log(`➡️ Fila ${i}: contiene ${tds.length} celdas`);
       if (tds.length < 2) return;
 
       const tdTexto = $(tds[0]);
       const tdImagen = $(tds[1]);
 
-      const nombre = tdTexto.find('strong').first().text().trim();
+      console.log(`📝 Contenido texto (raw):`, tdTexto.html());
+      console.log(`🖼️ Imagen:`, tdImagen.find('img').attr('src'));
 
+      const nombre = tdTexto.find('strong').first().text().trim();
       const texto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
       const resolucion = texto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
@@ -174,39 +184,8 @@ app.get('/profesores-sistemas', async (req, res) => {
     console.error('❌ Error al obtener profesores:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
-
-  const h1 = $('h1').filter((i, el) =>
-  $(el).text().toLowerCase().includes('docentes tiempo completo')
-).first();
-
-if (!h1.length) {
-  console.warn('⚠️ No se encontró el <h1> con "Docentes Tiempo Completo"');
-  return res.status(404).json({ error: 'Encabezado no encontrado' });
-}
-
-console.log('✅ h1 encontrado:', h1.text());
-
-const tabla = h1.nextAll('table').first();
-if (!tabla.length) {
-  console.warn('⚠️ No se encontró la tabla después del <h1>');
-  return res.status(404).json({ error: 'Tabla no encontrada' });
-}
-
-const filas = tabla.find('tr');
-console.log(`🔍 Número de filas: ${filas.length}`);
-
-filas.each((i, fila) => {
-  const tds = $(fila).find('td');
-  console.log(`➡️ Fila ${i}: contiene ${tds.length} celdas`);
-
-  const tdTexto = $(tds[0]);
-  const tdImagen = $(tds[1]);
-  console.log(`📝 Contenido texto (raw):`, tdTexto.html());
-  console.log(`🖼️ Imagen:`, tdImagen.find('img').attr('src'));
 });
 
-
-});
 
 
 
