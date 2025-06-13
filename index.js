@@ -14,11 +14,11 @@ app.post('/chat', async (req, res) => {
   const userText = req.body.text;
 
   try {
-    const response = await fetch('https://api.botpress.cloud/v1/bots/3fffa794-29fc-469d-a1b8-542be6dee914/converse/default', {
+    const response = await fetch('https://api.botpress.cloud/v1/chat/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer TU_API_KEY_AQUI' // <-- reemplaza con tu API KEY real
+        'Authorization': '3d6f8d46-3bcd-46eb-8c70-1c75b77421c2' // <-- reemplaza con tu API KEY real
       },
       body: JSON.stringify({ type: 'text', text: userText })
     });
