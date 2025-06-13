@@ -175,8 +175,36 @@ app.get('/profesores-sistemas', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
   }
 
-  const { data } = await axios.get(URL2);
-console.log('🔍 Contenido recibido:', data.substring(0, 500)); // solo muestra los primeros caracteres
+  const h1 = $('h1').filter((i, el) =>
+  $(el).text().toLowerCase().includes('docentes tiempo completo')
+).first();
+
+if (!h1.length) {
+  console.warn('⚠️ No se encontró el <h1> con "Docentes Tiempo Completo"');
+  return res.status(404).json({ error: 'Encabezado no encontrado' });
+}
+
+console.log('✅ h1 encontrado:', h1.text());
+
+const tabla = h1.nextAll('table').first();
+if (!tabla.length) {
+  console.warn('⚠️ No se encontró la tabla después del <h1>');
+  return res.status(404).json({ error: 'Tabla no encontrada' });
+}
+
+const filas = tabla.find('tr');
+console.log(`🔍 Número de filas: ${filas.length}`);
+
+filas.each((i, fila) => {
+  const tds = $(fila).find('td');
+  console.log(`➡️ Fila ${i}: contiene ${tds.length} celdas`);
+
+  const tdTexto = $(tds[0]);
+  const tdImagen = $(tds[1]);
+  console.log(`📝 Contenido texto (raw):`, tdTexto.html());
+  console.log(`🖼️ Imagen:`, tdImagen.find('img').attr('src'));
+});
+
 
 });
 
