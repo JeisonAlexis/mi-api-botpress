@@ -88,7 +88,7 @@ app.get('/director-programa', async (req, res) => {
 
       // Intento de extraer el párrafo que contiene el horario
 const pHorario = tdTexto.find('p').filter((i, el) =>
-  $(el).html()?.toLowerCase().includes('horario de atenci&oacute;n')
+  $(el).html()?.toLowerCase().includes('Horario de atención')
 ).first();
 
 console.log('🔍 tdTexto HTML:\n', tdTexto.html());
