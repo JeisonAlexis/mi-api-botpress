@@ -12,7 +12,7 @@ app.use(express.json());
 // Cambia esta URL por la real de tu universidad
 const URL = 'https://www.unipamplona.edu.co';
 
-const URL1 = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/22072013/01_elprograma.jsp';
+const URL1 = 'https://www.unipamplona.edu.co';
 
 
 app.get('/programas-acreditados', async (req, res) => {
@@ -58,23 +58,23 @@ app.get('/director-programa', async (req, res) => {
     const { data } = await axios.get(URL1);
     const $ = cheerio.load(data);
 
-    // Buscar el <p> que contiene el texto "Director de Programa"
     let director = '';
     let correo = '';
     let horario = '';
+    
+    $('td').each((i, el) => {
+      const html = $(el).html();
+      if (html.includes('Director de Programa')) {
+        const textoPlano = $(el).text().replace(/\s+/g, ' ').trim();
 
-    $('p').each((i, el) => {
-      const text = $(el).text();
+        // Buscar los datos en el texto plano
+        const directorMatch = textoPlano.match(/Director de Programa\s*(.*?)\s*[\w.-]+@[\w.-]+/);
+        const correoMatch = textoPlano.match(/([\w.-]+@[\w.-]+)/);
+        const horarioMatch = textoPlano.match(/Horario de atención:\s*(.*)/i);
 
-      if (text.includes('Director de Programa')) {
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-        director = lines[1];
-        correo = lines[2];
-      }
-
-      if (text.includes('Horario de atención')) {
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-        horario = lines[1];
+        director = directorMatch ? directorMatch[1].trim() : '';
+        correo = correoMatch ? correoMatch[1].trim() : '';
+        horario = horarioMatch ? horarioMatch[1].trim() : '';
       }
     });
 
@@ -84,6 +84,7 @@ app.get('/director-programa', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del director.' });
   }
 });
+
 
 
 app.listen(port, () => {
