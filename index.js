@@ -63,22 +63,23 @@ app.get('/director-programa', async (req, res) => {
     let horario = '';
     let imagen = '';
 
+    // Buscar el encabezado que contiene la palabra "dirección"
     const direccion = $('h3').filter((i, el) =>
       $(el).text().toLowerCase().includes('dirección')
     ).first();
 
     if (direccion.length) {
-      const tabla = direccion.nextAll('table').first();
-      const fila = tabla.find('tr').first();
+      const tabla = direccion.nextAll('table').first();       // Buscar la tabla cercana
+      const fila = tabla.find('tr').first();                  // Primera fila
 
-      const tdTexto = fila.find('td').first();
-      const tdImagen = fila.find('td').eq(1);
+      const tdTexto = fila.find('td').first();                // Celda de texto
+      const tdImagen = fila.find('td').eq(1);                 // Celda con imagen
 
-      const rawHTML = tdTexto.html(); // HTML sin parsear para mayor control
+      const rawHTML = tdTexto.html();                         // Obtener HTML puro
 
+      // Extraer director y correo usando expresiones regulares
       const regexDirector = /<strong>Director de Programa<\/strong><br\s*\/?>(.*?)<br\s*\/?>/i;
       const regexCorreo = /<br\s*\/?>([\w.-]+@[\w.-]+\.\w+)/i;
-      const regexHorario = /Horario de atenci&oacute;n:<\/strong>(.*?)<\/p>/is;
 
       const matchDirector = rawHTML.match(regexDirector);
       const matchCorreo = rawHTML.match(regexCorreo);
@@ -86,41 +87,39 @@ app.get('/director-programa', async (req, res) => {
       director = matchDirector ? matchDirector[1].trim() : '';
       correo = matchCorreo ? matchCorreo[1].trim() : '';
 
-      // Intento de extraer el párrafo que contiene el horario
-const pHorario = tdTexto.find('p').filter((i, el) =>
-  $(el).html()?.toLowerCase().includes('Horario de atención')
-).first();
+      // Extraer el párrafo que contiene el horario de atención
+      const pHorario = tdTexto.find('p').filter((i, el) =>
+        $(el).text().toLowerCase().includes('horario de atención')
+      ).first();
 
-console.log('🔍 tdTexto HTML:\n', tdTexto.html());
+      if (pHorario && pHorario.length) {
+        const raw = pHorario.html();                          // Obtener HTML del párrafo
 
-if (pHorario && pHorario.length) {
-  const raw = pHorario.html();
-  console.log('💬 HTML del horario:', raw); // <-- Agrega esto para ver si se está obteniendo correctamente
+        // Limpiar y formatear el horario
+        const afterStrong = raw.split('</strong>')[1] || '';
+        horario = afterStrong
+          .replace(/<br\s*\/?>/gi, '\n')                      // Reemplazar <br> por saltos de línea
+          .replace(/<[^>]*>/g, '')                            // Eliminar cualquier otra etiqueta HTML
+          .trim();
+      }
 
-  const afterStrong = raw.split('</strong>')[1] || '';
-  horario = afterStrong
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, '') // quitar otras etiquetas HTML
-    .trim();
-} else {
-  console.warn('⚠️ No se encontró el párrafo con el horario');
-}
-
-
-
-
+      // Obtener imagen
       const img = tdImagen.find('img').attr('src');
       if (img) {
-        imagen = img.startsWith('http') ? img : `${URL.split('/unipamplona')[0]}${img}`;
+        const base = URL1.split('/unipamplona')[0];
+        imagen = img.startsWith('http') ? img : `${base}${img}`;
       }
     }
 
+    // Enviar respuesta
     res.json({ director, correo, horario, imagen });
+
   } catch (error) {
-    console.error('Error al obtener los datos del director:', error.message);
+    console.error('❌ Error al obtener los datos del director:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información del director.' });
   }
 });
+
 
 
 
