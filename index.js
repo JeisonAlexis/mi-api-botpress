@@ -14,6 +14,8 @@ const URL = 'https://www.unipamplona.edu.co';
 
 const URL1 = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/22072013/01_elprograma.jsp';
 
+const URL2 = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_pamplona.jsp';
+
 
 app.get('/programas-acreditados', async (req, res) => {
   try {
@@ -121,6 +123,52 @@ app.get('/director-programa', async (req, res) => {
 });
 
 
+app.get('/profesores-sistemas', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL2); // Cambia esto por la URL real
+    const $ = cheerio.load(data);
+
+    const profesores = [];
+
+    const encabezado = $('h1').filter((i, el) =>
+      $(el).text().toLowerCase().includes('docentes tiempo completo')
+    ).first();
+
+    if (!encabezado.length) {
+      return res.status(404).json({ error: 'No se encontró el encabezado de docentes.' });
+    }
+
+    const tabla = encabezado.nextAll('table').first();
+    const celdas = tabla.find('td');
+
+    celdas.each((i, el) => {
+      const td = $(el);
+      const html = td.html();
+      const texto = td.text();
+
+      const nombreMatch = texto.match(/(M\.Sc\.|Dra\.|Dr\.|Mg\.|Ph\.D\.|Ing\.)?\s*([^\n<]+)/);
+      const resolucionMatch = texto.match(/Resolución\s*([\w\s.-]+)/i);
+      const cargoMatch = texto.match(/Profesor[^\n<]+/i);
+      const correoMatch = texto.match(/([\w.-]+@[\w.-]+\.\w+)/);
+      const campusMatch = texto.match(/Campus:\s*(\w+)/i);
+      const urlCvLAC = td.find('a[href*="cvlac"]').attr('href');
+
+      profesores.push({
+        nombre: nombreMatch ? nombreMatch[0].trim() : '',
+        resolucion: resolucionMatch ? resolucionMatch[1].trim() : '',
+        cargo: cargoMatch ? cargoMatch[0].trim() : '',
+        correo: correoMatch ? correoMatch[1].trim() : '',
+        campus: campusMatch ? campusMatch[1].trim() : '',
+        cvlac: urlCvLAC ? urlCvLAC.trim() : ''
+      });
+    });
+
+    res.json(profesores);
+  } catch (error) {
+    console.error('❌ Error al obtener los profesores:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información de los profesores.' });
+  }
+});
 
 
 
