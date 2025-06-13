@@ -63,27 +63,34 @@ app.get('/director-programa', async (req, res) => {
     let horario = '';
     let imagen = '';
 
-    // Buscar el encabezado con texto "Dirección"
-    const heading = $('h3').filter((i, el) => $(el).text().includes('Dirección')).first();
+    const direccion = $('h3').filter((i, el) =>
+      $(el).text().toLowerCase().includes('dirección')
+    ).first();
 
-    if (heading.length) {
-      const tabla = heading.next('table');
-      const primeraFila = tabla.find('tr').first();
+    if (direccion.length) {
+      const tabla = direccion.nextAll('table').first();
+      const fila = tabla.find('tr').first();
 
-      const columnaTexto = primeraFila.find('td').first();
-      const columnaImagen = primeraFila.find('td').eq(1);
+      const tdTexto = fila.find('td').first();
+      const tdImagen = fila.find('td').eq(1);
 
-      const textos = columnaTexto.text().split('\n').map(t => t.trim()).filter(Boolean);
+      const rawHTML = tdTexto.html(); // HTML sin parsear para mayor control
 
-      // Extraer los valores
-      director = textos[1] || '';
-      correo = textos[2] || '';
-      horario = textos[4] || '';
+      const regexDirector = /<strong>Director de Programa<\/strong><br\s*\/?>(.*?)<br\s*\/?>/i;
+      const regexCorreo = /<br\s*\/?>([\w.-]+@[\w.-]+\.\w+)/i;
+      const regexHorario = /Horario de atenci&oacute;n:<\/strong><br\s*\/?>(.*?)<\/p>/i;
 
-      // Extraer imagen
-      const imgSrc = columnaImagen.find('img').attr('src');
-      if (imgSrc) {
-        imagen = imgSrc.startsWith('http') ? imgSrc : `${URL}${imgSrc}`;
+      const matchDirector = rawHTML.match(regexDirector);
+      const matchCorreo = rawHTML.match(regexCorreo);
+      const matchHorario = rawHTML.match(regexHorario);
+
+      director = matchDirector ? matchDirector[1].trim() : '';
+      correo = matchCorreo ? matchCorreo[1].trim() : '';
+      horario = matchHorario ? matchHorario[1].replace(/<br\s*\/?>/g, '\n').trim() : '';
+
+      const img = tdImagen.find('img').attr('src');
+      if (img) {
+        imagen = img.startsWith('http') ? img : `${URL.split('/unipamplona')[0]}${img}`;
       }
     }
 
@@ -93,6 +100,7 @@ app.get('/director-programa', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del director.' });
   }
 });
+
 
 
 
