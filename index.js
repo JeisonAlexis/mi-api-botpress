@@ -82,11 +82,28 @@ app.get('/director-programa', async (req, res) => {
 
       const matchDirector = rawHTML.match(regexDirector);
       const matchCorreo = rawHTML.match(regexCorreo);
-      const matchHorario = rawHTML.match(regexHorario);
 
       director = matchDirector ? matchDirector[1].trim() : '';
       correo = matchCorreo ? matchCorreo[1].trim() : '';
-      horario = matchHorario ? matchHorario[1].replace(/<br\s*\/?>/gi, '\n').trim() : '';
+
+      // Intento de extraer el párrafo que contiene el horario
+const pHorario = tdTexto.find('p').filter((i, el) =>
+  $(el).html()?.toLowerCase().includes('horario de atenci&oacute;n')
+).first();
+
+if (pHorario && pHorario.length) {
+  const raw = pHorario.html();
+  console.log('💬 HTML del horario:', raw); // <-- Agrega esto para ver si se está obteniendo correctamente
+
+  const afterStrong = raw.split('</strong>')[1] || '';
+  horario = afterStrong
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, '') // quitar otras etiquetas HTML
+    .trim();
+} else {
+  console.warn('⚠️ No se encontró el párrafo con el horario');
+}
+
 
 
       const img = tdImagen.find('img').attr('src');
