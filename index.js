@@ -131,80 +131,74 @@ app.get('/director-programa', async (req, res) => {
 
 
 
-// After extracting full-time professors, add this code:
+app.get('/profesores-sistemas', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL2);
+    const $ = cheerio.load(data);
+    const profesores = [];
 
-// Find the part-time/catedra heading
-const h1PartTime = $('h1').filter((i, el) => 
-  $(el).text().toLowerCase().includes('docentes tiempo completo ocasional y cátedra')
-).first();
+    const encabezados = [
+      { texto: 'Docentes Tiempo Completo', puesto: 'Tiempo Completo' },
+      { texto: 'Docentes Tiempo Completo Ocasional y Cátedra', puesto: 'Ocasional o Cátedra' }
+    ];
 
-if (h1PartTime.length) {
-  // Find the associated table
-  const partTimeTable = h1PartTime.nextAll('div').find('table').first();
-  
-  if (partTimeTable.length) {
-    // Iterate over table rows
-    const filas = partTimeTable.find('tr');
-    filas.each((fIndex, fila) => {
-      const tds = $(fila).find('td');
-      
-      // Only process rows with 4 cells (2 professors per row)
-      if (tds.length !== 4) return;
-      
-      // Process each pair of cells (text and image)
-      for (let i = 0; i < tds.length; i += 2) {
-        const tdTexto = $(tds[i]);
-        const tdImagen = $(tds[i + 1]);
-        
-        // Extract professor data
-        const nombre = tdTexto.find('strong').first().text().trim();
-        const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
-        const resolucion = textoCompleto.match(/Resolución\s*([^<]+)/i)?.[1]?.trim() || '';
-        const cargoMatch = textoCompleto.match(/(Profesor[a]? [^<]+)/i);
-        const cargo = cargoMatch?.[0]?.trim() || '';
-        const correo = textoCompleto.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
-        const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
-        const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
-        
-        // Extract image
-        const imgSrc = tdImagen.find('img').attr('src') || '';
-        const imagen = imgSrc.startsWith('http')
-          ? imgSrc
-          : imgSrc.startsWith('data:')
-          ? ''
-          : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
-        
-        // Determine position type
-        let tipo = '';
-        if (cargo.includes('Ocasional')) {
-          tipo = 'Ocasional';
-        } else if (cargo.includes('Cátedra')) {
-          tipo = 'Cátedra';
-        } else {
-          tipo = 'Tiempo Completo';
-        }
-        
-        // Add professor to array if name exists
-        if (nombre) {
-          profesores.push({
-            nombre,
-            resolucion,
-            cargo,
-            correo,
-            campus,
-            cvlac,
-            imagen,
-            tipo  // Include position type
-          });
-        }
+    for (const encabezado of encabezados) {
+      const h1 = $('h1').filter((i, el) =>
+        $(el).text().toLowerCase().includes(encabezado.texto.toLowerCase())
+      ).first();
+
+      if (!h1.length) {
+        console.warn(`⚠️ No se encontró el <h1> con "${encabezado.texto}"`);
+        continue;
       }
-    });
-  } else {
-    console.warn('⚠️ No se encontró la tabla después del <h1> de tiempo completo ocasional y cátedra');
+
+      const tabla = h1.nextAll('div').find('table').first();
+
+      if (!tabla.length) {
+        console.warn(`⚠️ No se encontró la tabla después del <h1> "${encabezado.texto}"`);
+        continue;
+      }
+
+      const filas = tabla.find('tr');
+      filas.each((fIndex, fila) => {
+        const tds = $(fila).find('td');
+        if (tds.length !== 2 && tds.length !== 4) return;
+
+        for (let i = 0; i < tds.length; i += 2) {
+          const tdTexto = $(tds[i]);
+          const tdImagen = $(tds[i + 1]);
+
+          const nombre = tdTexto.find('strong').first().text().trim();
+          const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
+
+          const resolucion = textoCompleto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
+          const cargoExtraido = textoCompleto.match(/Profesor[a]? [^<\n]+/i)?.[0]?.trim();
+          const cargo = cargoExtraido || encabezado.puesto;
+          const correo = textoCompleto.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
+          const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
+          const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+
+          const imgSrc = tdImagen.find('img').attr('src') || '';
+          const imagen = imgSrc.startsWith('http')
+            ? imgSrc
+            : imgSrc.startsWith('data:')
+              ? ''
+              : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+
+          if (nombre) {
+            profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
+          }
+        }
+      });
+    }
+
+    res.json(profesores);
+  } catch (error) {
+    console.error('❌ Error al obtener los profesores:', error);
+    res.status(500).json({ error: 'Error al obtener los profesores' });
   }
-} else {
-  console.warn('⚠️ No se encontró el <h1> con "Docentes Tiempo Completo Ocasional y Cátedra"');
-}
+});
+
 
 
 
