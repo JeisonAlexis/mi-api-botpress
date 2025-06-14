@@ -207,61 +207,68 @@ app.get('/profesores-sistemas', async (req, res) => {
 const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
 
 
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
+
+const app = express();
+const PORT = 3000;
+const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
+
 app.get('/programas-por-facultad', async (req, res) => {
   try {
-    // Descargar el HTML con headers simulando navegador
     const { data } = await axios.get(URL_OFERTA, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+        'User-Agent': 'Mozilla/5.0' // Evita bloqueos de algunos servidores
       }
     });
-
-    // Verifica si contiene la clase esperada
-    if (!data.includes('table-row-inscripciones')) {
-      console.error("❌ La tabla no fue encontrada en el HTML descargado");
-      return res.status(500).json({
-        error: 'La tabla de programas no está en el HTML recibido. Verifica si la página está cargando contenido dinámico o si la URL es correcta.'
-      });
-    }
 
     const $ = cheerio.load(data);
     const resultado = [];
 
-    // Iterar sobre las filas de la tabla, ignorando la cabecera
-    $('tr.table-row-inscripciones').slice(1).each((_, row) => {
-      const $tds = $(row).children('td');
+    // Verificar que haya filas de la tabla
+    const filas = $('table.table-inscripciones tr.table-row-inscripciones');
 
-      if ($tds.length < 2) return; // Validación extra
+    if (filas.length < 2) {
+      return res.status(500).json({ error: 'La tabla de programas no contiene filas suficientes. Verifica si cambió la estructura.' });
+    }
 
-      const nombreFac = $tds.eq(0).text().trim().replace(/\s+/g, ' ');
+    // Iterar desde la segunda fila (omitir cabecera)
+    filas.slice(1).each((_, row) => {
+      const columnas = $(row).find('td');
+      if (columnas.length < 2) return;
+
+      const facultadHtml = $(columnas[0]);
+      const programasHtml = $(columnas[1]);
+
+      const nombreFacultad = facultadHtml.text().trim().replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+
       const programas = [];
+      programasHtml.find('li.list-item-oferta').each((_, li) => {
+        const nombre = $(li).find('a.link-oferta').text().trim();
+        const href = $(li).find('a.link-oferta').attr('href') || '';
+        const url = href ? new URL(href, URL_OFERTA).href : null;
+        const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
 
-      $tds.eq(1).find('li.list-item-oferta').each((_, li) => {
-        const $li = $(li);
-        const $link = $li.find('a.link-oferta');
-        const nombre = $link.text().trim();
-
-        let href = $link.attr('href');
-        if (href && !href.startsWith('http')) {
-          href = new URL(href, URL_OFERTA).href;
-        }
-
-        const info = $li.find('.info-oferta').text().trim().replace(/\s+/g, ' ') || null;
-
-        programas.push({ nombre, url: href, info });
+        programas.push({ nombre, url, info });
       });
 
-      resultado.push({ nombre: nombreFac, programas });
+      resultado.push({ facultad: nombreFacultad, programas });
     });
 
     res.json(resultado);
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('❌ Error al obtener la oferta:', error.message);
     res.status(500).json({
-      error: 'No se pudo obtener la información. Verifica que la estructura del HTML sea correcta o que la página esté accesible.'
+      error: 'No se pudo obtener la información. Verifica que la página esté disponible y no haya cambiado el HTML.'
     });
   }
 });
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+});
+
 
 
 // Inicia el servidor y escucha en el puerto especificado
