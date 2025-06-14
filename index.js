@@ -197,6 +197,49 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 
 
+const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/30102024/inscripciones.jsp';
+
+app.get('/programas-por-facultad', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL_OFERTA);
+    const $ = cheerio.load(data);
+
+    const resultado = [];
+
+    $('tr.table-row-inscripciones').each((i, row) => {
+      const facultadTd = $(row).find('td').first();
+      const programasTd = $(row).find('td').eq(1);
+
+      const facultadNombre = facultadTd.text().trim().replace(/\s+/g, ' ');
+      const facultadImagen = facultadTd.find('img').attr('src');
+      const facultad = {
+        nombre: facultadNombre,
+        imagen: facultadImagen ? `${URL_OFERTA.split('/unipamplona')[0]}${facultadImagen}` : null,
+        programas: []
+      };
+
+      programasTd.find('li.list-item-oferta').each((j, li) => {
+        const link = $(li).find('a.link-oferta');
+        const nombre = link.text().trim();
+        const url = link.attr('href') ? `${URL_OFERTA.split('/unipamplona')[0]}${link.attr('href')}` : null;
+        const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
+
+        facultad.programas.push({ nombre, url, info });
+      });
+
+      resultado.push(facultad);
+    });
+
+    res.json(resultado);
+  } catch (error) {
+    console.error('❌ Error al obtener los programas por facultad:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información de los programas.' });
+  }
+});
+
+
+
+
 
 app.listen(port, () => {
   console.log(`API corriendo en http://localhost:${port}`);
