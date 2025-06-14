@@ -204,8 +204,8 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 
 
-// Define correctamente la URL base
-const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/04112009/oferta_academica_pregrado.jsp';
+const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
+const URL_BASE = 'https://www.unipamplona.edu.co';
 
 app.get('/programas-por-facultad', async (req, res) => {
   try {
@@ -219,11 +219,12 @@ app.get('/programas-por-facultad', async (req, res) => {
     const resultado = [];
 
     const filas = $('table.table-inscripciones tr.table-row-inscripciones');
-    if (filas.length < 2) {
-      return res.status(500).json({ error: 'La tabla de programas no contiene filas suficientes.' });
+
+    if (filas.length < 1) {
+      return res.status(500).json({ error: 'La tabla de programas no contiene filas. Verifica si cambió la estructura.' });
     }
 
-    filas.slice(0).each((_, row) => {
+    filas.each((_, row) => {
       const columnas = $(row).find('td');
       if (columnas.length < 2) return;
 
@@ -234,18 +235,11 @@ app.get('/programas-por-facultad', async (req, res) => {
 
       const programas = [];
       programasHtml.find('li.list-item-oferta').each((_, li) => {
-        const a = $(li).find('a.link-oferta');
-        const nombre = a.text().trim();
-        const href = a.attr('href') || '';
-        let url = null;
-
-        try {
-          url = new URL(href, URL_OFERTA).href;
-        } catch (_) {
-          url = href;
-        }
-
+        const nombre = $(li).find('a.link-oferta').text().trim();
+        const href = $(li).find('a.link-oferta').attr('href') || '';
+        const url = href ? new URL(href, URL_BASE).href : null;
         const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
+
         programas.push({ nombre, url, info });
       });
 
@@ -260,6 +254,7 @@ app.get('/programas-por-facultad', async (req, res) => {
     });
   }
 });
+
 
 
 
