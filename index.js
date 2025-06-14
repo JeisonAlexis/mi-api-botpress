@@ -197,38 +197,41 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 
 
-const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/30102024/inscripciones.jsp';
+const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
 
 app.get('/programas-por-facultad', async (req, res) => {
   try {
     const { data } = await axios.get(URL_OFERTA);
     const $ = cheerio.load(data);
-
     const resultado = [];
 
-    $('tr.table-row-inscripciones').each((i, row) => {
+    // Saltamos el primer <tr> que son los encabezados
+    $('tr.table-row-inscripciones').slice(1).each((i, row) => {
       const facultadTd = $(row).find('td').first();
       const programasTd = $(row).find('td').eq(1);
 
-      const facultadNombre = facultadTd.text().trim().replace(/\s+/g, ' ');
-      const facultadImagen = facultadTd.find('img').attr('src');
-      const facultad = {
-        nombre: facultadNombre,
-        imagen: facultadImagen ? `${URL_OFERTA.split('/unipamplona')[0]}${facultadImagen}` : null,
-        programas: []
-      };
+      // Extraer nombre e imagen
+      const facultadTexto = facultadTd.text().trim().replace(/\s+/g, ' ');
+      const facultadNombre = facultadTexto.replace(/^Facultad\s+de\s+/i, 'Facultad de ').trim();
+      const facultadImagenSrc = facultadTd.find('img').attr('src');
+      const facultadImagen = facultadImagenSrc ? new URL(facultadImagenSrc, URL_OFERTA).href : null;
 
-      // Aquí corregimos el selector
-      programasTd.find('ul.list-oferta > li').each((j, li) => {
-        const link = $(li).find('a');
+      const programas = [];
+
+      programasTd.find('li.list-item-oferta').each((_, li) => {
+        const link = $(li).find('a.link-oferta');
         const nombre = link.text().trim();
-        const url = link.attr('href') ? `${URL_OFERTA.split('/unipamplona')[0]}${link.attr('href')}` : null;
+        const url = link.attr('href') ? new URL(link.attr('href'), URL_OFERTA).href : null;
         const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
 
-        facultad.programas.push({ nombre, url, info });
+        programas.push({ nombre, url, info: info || null });
       });
 
-      resultado.push(facultad);
+      resultado.push({
+        nombre: facultadNombre,
+        imagen: facultadImagen,
+        programas
+      });
     });
 
     res.json(resultado);
@@ -236,6 +239,11 @@ app.get('/programas-por-facultad', async (req, res) => {
     console.error('❌ Error al obtener los programas por facultad:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de los programas.' });
   }
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
 
 
