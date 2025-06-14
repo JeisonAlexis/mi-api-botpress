@@ -14,10 +14,7 @@ app.get('/', (req, res) => {
   res.send('¡Hola desde mi servicio de Render!');
 });
 
-// Inicia el servidor y escucha en el puerto especificado
-app.listen(port, () => {
-  console.log(`Servidor escuchando en el puerto ${port}`);
-});
+
 
 
 const URL = 'https://www.unipamplona.edu.co';
@@ -211,42 +208,54 @@ const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/
 
 app.get('/programas-por-facultad', async (req, res) => {
   try {
+    // Obtener el HTML de la página
     const { data } = await axios.get(URL_OFERTA);
     const $ = cheerio.load(data);
     const resultado = [];
 
+    // Iterar sobre cada fila de la tabla
     $('tr.table-row-inscripciones').slice(1).each((_, row) => {
       const $facTd = $(row).children('td').first();
       const $progTd = $(row).children('td').eq(1);
 
-      const nombreFac = $facTd.text()
-        .split('\n')[1]
-        .trim()
-        .replace(/\s+/g, ' ');
+      // Extraer el nombre de la facultad
+      const nombreFac = $facTd.contents().filter((_, el) => el.type === 'text').text().trim().replace(/\s+/g, ' ');
 
+      // Extraer la imagen de la facultad
       const imgSrc = $facTd.find('img').attr('src');
       const imagen = imgSrc ? new URL(imgSrc, URL_OFERTA).href : null;
 
+      // Extraer los programas
       const programas = [];
-      $progTd.find('li').each((_, li) => {
-        const $link = $(li).find('a');
+      $progTd.find('li.list-item-oferta').each((_, li) => {
+        const $link = $(li).find('a.link-oferta');
         const nombre = $link.text().trim();
         const href = $link.attr('href');
         const url = href ? new URL(href, URL_OFERTA).href : null;
+
+        // Extraer información adicional del programa
         const infoRaw = $(li).find('.info-oferta').text().trim();
         const info = infoRaw ? infoRaw.replace(/\s+/g, ' ') : null;
+
         programas.push({ nombre, url, info });
       });
 
+      // Agregar la facultad al resultado
       resultado.push({ nombre: nombreFac, imagen, programas });
     });
 
+    // Devolver el resultado como JSON
     res.json(resultado);
   } catch (error) {
     console.error('❌ Error:', error.message);
     res.status(500).json({
-      error: 'No se pudo obtener la información. Revisa si la URL aún es válida.'
+      error: 'No se pudo obtener la información. Verifica que la URL sea válida y que la estructura del HTML no haya cambiado.'
     });
   }
+});
+
+// Inicia el servidor y escucha en el puerto especificado
+app.listen(port, () => {
+  console.log(`Servidor escuchando en el puerto ${port}`);
 });
 
