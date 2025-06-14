@@ -209,54 +209,60 @@ const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/
 
 app.get('/programas-por-facultad', async (req, res) => {
   try {
-    // Obtener el HTML de la página
-    const { data } = await axios.get(URL_OFERTA);
+    // Descargar el HTML con headers simulando navegador
+    const { data } = await axios.get(URL_OFERTA, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
+    });
+
+    // Verifica si contiene la clase esperada
+    if (!data.includes('table-row-inscripciones')) {
+      console.error("❌ La tabla no fue encontrada en el HTML descargado");
+      return res.status(500).json({
+        error: 'La tabla de programas no está en el HTML recibido. Verifica si la página está cargando contenido dinámico o si la URL es correcta.'
+      });
+    }
+
     const $ = cheerio.load(data);
     const resultado = [];
 
-// Verifica si la tabla existe
-if (!data.includes('table-row-inscripciones')) {
-  console.error("❌ La tabla no fue encontrada en el HTML descargado");
-  return res.status(500).json({ error: 'La tabla de programas no está en el HTML recibido. Verifica si la página está cargando contenido dinámico.' });
-}
-
-
-    // Iterar sobre cada fila de la tabla
+    // Iterar sobre las filas de la tabla, ignorando la cabecera
     $('tr.table-row-inscripciones').slice(1).each((_, row) => {
-      const $facTd = $(row).children('td').first();
-      const $progTd = $(row).children('td').eq(1);
+      const $tds = $(row).children('td');
 
-      // Extraer el nombre de la facultad
-      const nombreFac = $facTd.clone().children().remove().end().text().trim().replace(/\s+/g, ' ');
+      if ($tds.length < 2) return; // Validación extra
 
-      // Extraer los programas
+      const nombreFac = $tds.eq(0).text().trim().replace(/\s+/g, ' ');
       const programas = [];
-      $progTd.find('li.list-item-oferta').each((_, li) => {
-        const $link = $(li).find('a.link-oferta');
+
+      $tds.eq(1).find('li.list-item-oferta').each((_, li) => {
+        const $li = $(li);
+        const $link = $li.find('a.link-oferta');
         const nombre = $link.text().trim();
-        const href = $link.attr('href');
-        const url = href ? new URL(href.startsWith('/') ? href : `/${href}`, URL_OFERTA).href : null;
 
-        // Extraer información adicional del programa
-        const infoRaw = $(li).find('.info-oferta').text().trim();
-        const info = infoRaw ? infoRaw.replace(/\s+/g, ' ') : null;
+        let href = $link.attr('href');
+        if (href && !href.startsWith('http')) {
+          href = new URL(href, URL_OFERTA).href;
+        }
 
-        programas.push({ nombre, url, info });
+        const info = $li.find('.info-oferta').text().trim().replace(/\s+/g, ' ') || null;
+
+        programas.push({ nombre, url: href, info });
       });
 
-      // Agregar la facultad al resultado
       resultado.push({ nombre: nombreFac, programas });
     });
 
-    // Devolver el resultado como JSON
     res.json(resultado);
   } catch (error) {
     console.error('❌ Error:', error.message);
     res.status(500).json({
-      error: 'No se pudo obtener la información. Verifica que la estructura del HTML sea correcta.'
+      error: 'No se pudo obtener la información. Verifica que la estructura del HTML sea correcta o que la página esté accesible.'
     });
   }
 });
+
 
 // Inicia el servidor y escucha en el puerto especificado
 app.listen(port, () => {
