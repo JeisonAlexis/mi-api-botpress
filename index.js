@@ -204,29 +204,28 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 
 
-const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
+// Define correctamente la URL base
+const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/04112009/oferta_academica_pregrado.jsp';
 
 app.get('/programas-por-facultad', async (req, res) => {
   try {
     const { data } = await axios.get(URL_OFERTA, {
       headers: {
-        'User-Agent': 'Mozilla/5.0' // Evita bloqueos de algunos servidores
+        'User-Agent': 'Mozilla/5.0' // Algunos servidores bloquean peticiones sin esto
       }
     });
-
-    console.log(data); // 👈 esto te mostrará qué recibió cheerio
 
     const $ = cheerio.load(data);
     const resultado = [];
 
-    // Verificar que haya filas de la tabla
+    // Seleccionar las filas de la tabla
     const filas = $('table.table-inscripciones tr.table-row-inscripciones');
 
     if (filas.length < 2) {
-      return res.status(500).json({ error: 'La tabla de programas no contiene filas suficientes. Verifica si cambió la estructura.' });
+      return res.status(500).json({ error: 'La tabla no tiene datos suficientes. Puede que la estructura haya cambiado.' });
     }
 
-    // Iterar desde la segunda fila (omitir cabecera)
+    // Iterar desde la segunda fila (omitir encabezado)
     filas.slice(1).each((_, row) => {
       const columnas = $(row).find('td');
       if (columnas.length < 2) return;
@@ -234,13 +233,15 @@ app.get('/programas-por-facultad', async (req, res) => {
       const facultadHtml = $(columnas[0]);
       const programasHtml = $(columnas[1]);
 
-      const nombreFacultad = facultadHtml.text().trim().replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+      const nombreFacultad = facultadHtml.text().trim().replace(/\s+/g, ' ');
 
       const programas = [];
       programasHtml.find('li.list-item-oferta').each((_, li) => {
-        const nombre = $(li).find('a.link-oferta').text().trim();
-        const href = $(li).find('a.link-oferta').attr('href') || '';
+        const enlace = $(li).find('a.link-oferta');
+        const nombre = enlace.text().trim();
+        const href = enlace.attr('href') || '';
         const url = href ? new URL(href, URL_OFERTA).href : null;
+
         const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
 
         programas.push({ nombre, url, info });
