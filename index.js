@@ -9,6 +9,16 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Define una ruta básica (opcional, pero útil para probar)
+app.get('/', (req, res) => {
+  res.send('¡Hola desde mi servicio de Render!');
+});
+
+// Inicia el servidor y escucha en el puerto especificado
+app.listen(port, () => {
+  console.log(`Servidor escuchando en el puerto ${port}`);
+});
+
 
 const URL = 'https://www.unipamplona.edu.co';
 
@@ -243,5 +253,4 @@ app.get('/programas-por-facultad', async (req, res) => {
     });
   }
 });
-
 
