@@ -211,22 +211,19 @@ app.get('/programas-por-facultad', async (req, res) => {
   try {
     const { data } = await axios.get(URL_OFERTA, {
       headers: {
-        'User-Agent': 'Mozilla/5.0' // Algunos servidores bloquean peticiones sin esto
+        'User-Agent': 'Mozilla/5.0'
       }
     });
 
     const $ = cheerio.load(data);
     const resultado = [];
 
-    // Seleccionar las filas de la tabla
     const filas = $('table.table-inscripciones tr.table-row-inscripciones');
-
     if (filas.length < 2) {
-      return res.status(500).json({ error: 'La tabla no tiene datos suficientes. Puede que la estructura haya cambiado.' });
+      return res.status(500).json({ error: 'La tabla de programas no contiene filas suficientes.' });
     }
 
-    // Iterar desde la segunda fila (omitir encabezado)
-    filas.slice(1).each((_, row) => {
+    filas.slice(0).each((_, row) => {
       const columnas = $(row).find('td');
       if (columnas.length < 2) return;
 
@@ -237,13 +234,18 @@ app.get('/programas-por-facultad', async (req, res) => {
 
       const programas = [];
       programasHtml.find('li.list-item-oferta').each((_, li) => {
-        const enlace = $(li).find('a.link-oferta');
-        const nombre = enlace.text().trim();
-        const href = enlace.attr('href') || '';
-        const url = href ? new URL(href, URL_OFERTA).href : null;
+        const a = $(li).find('a.link-oferta');
+        const nombre = a.text().trim();
+        const href = a.attr('href') || '';
+        let url = null;
+
+        try {
+          url = new URL(href, URL_OFERTA).href;
+        } catch (_) {
+          url = href;
+        }
 
         const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
-
         programas.push({ nombre, url, info });
       });
 
