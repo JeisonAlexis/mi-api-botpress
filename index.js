@@ -186,12 +186,11 @@ app.get('/profesores-sistemas', async (req, res) => {
 const imgSrc = imgTag.length ? imgTag.attr('src') : '';
 
 const imagen = imgSrc
-  ? imgSrc.startsWith('http')
+  ? imgSrc.startsWith('http') || imgSrc.startsWith('data:')
     ? imgSrc
-    : imgSrc.startsWith('data:')
-      ? ''
-      : `${URL2.split('/unipamplona')[0]}${imgSrc}`
+    : `${URL2.split('/unipamplona')[0]}${imgSrc}`
   : '';
+
 
           if (nombre) {
             profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
