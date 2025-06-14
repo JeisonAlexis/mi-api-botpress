@@ -131,76 +131,80 @@ app.get('/director-programa', async (req, res) => {
 
 
 
-app.get('/profesores-sistemas', async (req, res) => {
-  try {
-    const { data } = await axios.get(URL2);
-    const $ = cheerio.load(data);
-    const profesores = [];
+// After extracting full-time professors, add this code:
 
-    // Buscar el encabezado correcto
-    const h1 = $('h1').filter((i, el) =>
-      $(el).text().toLowerCase().includes('docentes tiempo completo')
-    ).first();
+// Find the part-time/catedra heading
+const h1PartTime = $('h1').filter((i, el) => 
+  $(el).text().toLowerCase().includes('docentes tiempo completo ocasional y cátedra')
+).first();
 
-    if (!h1.length) {
-      console.warn('⚠️ No se encontró el <h1> con "Docentes Tiempo Completo"');
-      return res.status(404).json({ error: 'Encabezado no encontrado' });
-    }
-
-    // Buscar la tabla asociada al encabezado
-    const tabla = $('h1:contains("Docentes Tiempo Completo")').nextAll('div').find('table').first();
-
-
-    if (!tabla.length) {
-      console.warn('⚠️ No se encontró la tabla después del <h1>');
-      return res.status(404).json({ error: 'Tabla no encontrada' });
-    }
-
-    // Iterar sobre las filas de la tabla
-    const filas = tabla.find('tr');
+if (h1PartTime.length) {
+  // Find the associated table
+  const partTimeTable = h1PartTime.nextAll('div').find('table').first();
+  
+  if (partTimeTable.length) {
+    // Iterate over table rows
+    const filas = partTimeTable.find('tr');
     filas.each((fIndex, fila) => {
       const tds = $(fila).find('td');
       
-      // Solo procesar filas con 4 celdas (2 profesores por fila)
+      // Only process rows with 4 cells (2 professors per row)
       if (tds.length !== 4) return;
-
-      // Procesar cada par de celdas (texto e imagen)
+      
+      // Process each pair of cells (text and image)
       for (let i = 0; i < tds.length; i += 2) {
         const tdTexto = $(tds[i]);
         const tdImagen = $(tds[i + 1]);
-
-        // Extraer datos del profesor
+        
+        // Extract professor data
         const nombre = tdTexto.find('strong').first().text().trim();
         const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
-
-        // Extraer resolución, cargo, correo y campus
-        const resolucion = textoCompleto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
-        const cargo = textoCompleto.match(/Profesor[a]? [^<\n]+/i)?.[0]?.trim() || '';
+        const resolucion = textoCompleto.match(/Resolución\s*([^<]+)/i)?.[1]?.trim() || '';
+        const cargoMatch = textoCompleto.match(/(Profesor[a]? [^<]+)/i);
+        const cargo = cargoMatch?.[0]?.trim() || '';
         const correo = textoCompleto.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
         const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
         const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
-
-        // Extraer imagen
+        
+        // Extract image
         const imgSrc = tdImagen.find('img').attr('src') || '';
         const imagen = imgSrc.startsWith('http')
           ? imgSrc
           : imgSrc.startsWith('data:')
-            ? ''
-            : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
-
-        // Agregar profesor al arreglo
+          ? ''
+          : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+        
+        // Determine position type
+        let tipo = '';
+        if (cargo.includes('Ocasional')) {
+          tipo = 'Ocasional';
+        } else if (cargo.includes('Cátedra')) {
+          tipo = 'Cátedra';
+        } else {
+          tipo = 'Tiempo Completo';
+        }
+        
+        // Add professor to array if name exists
         if (nombre) {
-          profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
+          profesores.push({
+            nombre,
+            resolucion,
+            cargo,
+            correo,
+            campus,
+            cvlac,
+            imagen,
+            tipo  // Include position type
+          });
         }
       }
     });
-
-    res.json(profesores);
-  } catch (error) {
-    console.error('❌ Error:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener la información.' });
+  } else {
+    console.warn('⚠️ No se encontró la tabla después del <h1> de tiempo completo ocasional y cátedra');
   }
-});
+} else {
+  console.warn('⚠️ No se encontró el <h1> con "Docentes Tiempo Completo Ocasional y Cátedra"');
+}
 
 
 
