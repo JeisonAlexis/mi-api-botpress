@@ -241,16 +241,4 @@ app.get('/programas-por-facultad', async (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-});
 
-
-
-
-
-
-app.listen(port, () => {
-  console.log(`API corriendo en http://localhost:${port}`);
-});
