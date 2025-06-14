@@ -182,12 +182,16 @@ app.get('/profesores-sistemas', async (req, res) => {
           const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
           const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
 
-          const imgSrc = tdImagen.find('img').attr('src') || '';
-          const imagen = imgSrc.startsWith('http')
-            ? imgSrc
-            : imgSrc.startsWith('data:')
-              ? ''
-              : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+          const imgTag = tdImagen.find('img');
+const imgSrc = imgTag.length ? imgTag.attr('src') : '';
+
+const imagen = imgSrc
+  ? imgSrc.startsWith('http')
+    ? imgSrc
+    : imgSrc.startsWith('data:')
+      ? ''
+      : `${URL2.split('/unipamplona')[0]}${imgSrc}`
+  : '';
 
           if (nombre) {
             profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
