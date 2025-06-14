@@ -219,11 +219,7 @@ app.get('/programas-por-facultad', async (req, res) => {
       const $progTd = $(row).children('td').eq(1);
 
       // Extraer el nombre de la facultad
-      const nombreFac = $facTd.contents().filter((_, el) => el.type === 'text').text().trim().replace(/\s+/g, ' ');
-
-      // Extraer la imagen de la facultad
-      const imgSrc = $facTd.find('img').attr('src');
-      const imagen = imgSrc ? new URL(imgSrc, URL_OFERTA).href : null;
+      const nombreFac = $facTd.clone().children().remove().end().text().trim().replace(/\s+/g, ' ');
 
       // Extraer los programas
       const programas = [];
@@ -231,7 +227,7 @@ app.get('/programas-por-facultad', async (req, res) => {
         const $link = $(li).find('a.link-oferta');
         const nombre = $link.text().trim();
         const href = $link.attr('href');
-        const url = href ? new URL(href, URL_OFERTA).href : null;
+        const url = href ? new URL(href.startsWith('/') ? href : `/${href}`, URL_OFERTA).href : null;
 
         // Extraer información adicional del programa
         const infoRaw = $(li).find('.info-oferta').text().trim();
@@ -241,7 +237,7 @@ app.get('/programas-por-facultad', async (req, res) => {
       });
 
       // Agregar la facultad al resultado
-      resultado.push({ nombre: nombreFac, imagen, programas });
+      resultado.push({ nombre: nombreFac, programas });
     });
 
     // Devolver el resultado como JSON
@@ -249,7 +245,7 @@ app.get('/programas-por-facultad', async (req, res) => {
   } catch (error) {
     console.error('❌ Error:', error.message);
     res.status(500).json({
-      error: 'No se pudo obtener la información. Verifica que la URL sea válida y que la estructura del HTML no haya cambiado.'
+      error: 'No se pudo obtener la información. Verifica que la estructura del HTML sea correcta.'
     });
   }
 });
