@@ -214,6 +214,8 @@ app.get('/programas-por-facultad', async (req, res) => {
       }
     });
 
+    console.log(data); // 👈 esto te mostrará qué recibió cheerio
+
     const $ = cheerio.load(data);
     const resultado = [];
 
