@@ -4,7 +4,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 const app = express();
-const port = 3000;
+//const port = 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -133,7 +133,7 @@ app.get('/director-programa', async (req, res) => {
 
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid'); // Para nombres únicos
+const { v4: uuidv4 } = require('uuid'); 
 
 app.use('/imagenes', express.static('public/profesores'));
 
@@ -267,9 +267,8 @@ app.get('/programas-por-facultad', async (req, res) => {
 
 
 
+const port = process.env.PORT || 3000;
 
-// Inicia el servidor y escucha en el puerto especificado
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
-
