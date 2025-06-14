@@ -215,29 +215,26 @@ app.get('/programas-por-facultad', async (req, res) => {
     const $ = cheerio.load(data);
     const resultado = [];
 
-    // Recorremos cada fila de facultad (salteamos encabezado)
     $('tr.table-row-inscripciones').slice(1).each((_, row) => {
       const $facTd = $(row).children('td').first();
       const $progTd = $(row).children('td').eq(1);
 
       const nombreFac = $facTd.text()
-        .split('\n')[1]       // Tomamos sólo el nombre tras el <br/>
-        .trim()               // Eliminamos espacios extras
+        .split('\n')[1]
+        .trim()
         .replace(/\s+/g, ' ');
 
       const imgSrc = $facTd.find('img').attr('src');
       const imagen = imgSrc ? new URL(imgSrc, URL_OFERTA).href : null;
 
       const programas = [];
-      $progTd.find('ul.list-oferta > li').each((_, li) => {
-        const $link = $(li).find('a.link-oferta');
+      $progTd.find('li').each((_, li) => {
+        const $link = $(li).find('a');
         const nombre = $link.text().trim();
         const href = $link.attr('href');
         const url = href ? new URL(href, URL_OFERTA).href : null;
-
         const infoRaw = $(li).find('.info-oferta').text().trim();
-        const info = infoRaw ? infoRaw.replace(/\s+/, ' ') : null;
-
+        const info = infoRaw ? infoRaw.replace(/\s+/g, ' ') : null;
         programas.push({ nombre, url, info });
       });
 
@@ -245,11 +242,10 @@ app.get('/programas-por-facultad', async (req, res) => {
     });
 
     res.json(resultado);
-
   } catch (error) {
-    console.error('❌ Error al obtener los programas por facultad:', error.message);
+    console.error('❌ Error:', error.message);
     res.status(500).json({
-      error: 'No se pudo obtener la información de los programas. Verifica que URL_OFERTA sea accesible.'
+      error: 'No se pudo obtener la información. Revisa si la URL aún es válida.'
     });
   }
 });
