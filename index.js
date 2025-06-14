@@ -206,12 +206,20 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
 
+
 app.get('/programas-por-facultad', async (req, res) => {
   try {
     // Obtener el HTML de la página
     const { data } = await axios.get(URL_OFERTA);
     const $ = cheerio.load(data);
     const resultado = [];
+
+// Verifica si la tabla existe
+if (!data.includes('table-row-inscripciones')) {
+  console.error("❌ La tabla no fue encontrada en el HTML descargado");
+  return res.status(500).json({ error: 'La tabla de programas no está en el HTML recibido. Verifica si la página está cargando contenido dinámico.' });
+}
+
 
     // Iterar sobre cada fila de la tabla
     $('tr.table-row-inscripciones').slice(1).each((_, row) => {
