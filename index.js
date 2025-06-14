@@ -199,31 +199,41 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/30102024/inscripciones.jsp';
 
-app.get('/programas-acreditados', async (req, res) => {
+app.get('/programas-por-facultad', async (req, res) => {
   try {
-    const { data } = await axios.get(URL);
+    const { data } = await axios.get(URL_OFERTA);
     const $ = cheerio.load(data);
 
-    const facultades = [];
+    const resultado = [];
 
-    $('.table-row-inscripciones').each((i, el) => {
-      const facultad = $(el).find('td').first().text().trim().replace(/\s+/g, ' ');
-      const programas = [];
+    $('tr.table-row-inscripciones').each((i, row) => {
+      const facultadTd = $(row).find('td').first();
+      const programasTd = $(row).find('td').eq(1);
 
-      $(el).find('.list-oferta .list-item-oferta').each((j, item) => {
-        const nombre = $(item).find('a').text().trim();
-        const enlace = URL + $(item).find('a').attr('href');
-        const info = $(item).find('.info-oferta').text().trim();
+      const facultadNombre = facultadTd.text().trim().replace(/\s+/g, ' ');
+      const facultadImagen = facultadTd.find('img').attr('src');
+      const facultad = {
+        nombre: facultadNombre,
+        imagen: facultadImagen ? `${URL_OFERTA.split('/unipamplona')[0]}${facultadImagen}` : null,
+        programas: []
+      };
 
-        programas.push({ nombre, enlace, info });
+      // Aquí corregimos el selector
+      programasTd.find('ul.list-oferta > li').each((j, li) => {
+        const link = $(li).find('a');
+        const nombre = link.text().trim();
+        const url = link.attr('href') ? `${URL_OFERTA.split('/unipamplona')[0]}${link.attr('href')}` : null;
+        const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
+
+        facultad.programas.push({ nombre, url, info });
       });
 
-      facultades.push({ facultad, programas });
+      resultado.push(facultad);
     });
 
-    res.json(facultades);
+    res.json(resultado);
   } catch (error) {
-    console.error('Error al obtener los programas:', error.message);
+    console.error('❌ Error al obtener los programas por facultad:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de los programas.' });
   }
 });
