@@ -236,7 +236,7 @@ app.get('/programas-por-facultad', async (req, res) => {
 
     res.json(resultado);
   } catch (error) {
-    console.error('❌ Error al obtener los programas por facultad:', error.message);
+    console.error('Error al obtener los programas por facultad:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de los programas.' });
   }
 });
