@@ -200,6 +200,11 @@ app.get('/profesores-sistemas', async (req, res) => {
               const fileName = `${uuidv4()}.${ext}`;
               const filePath = path.join(__dirname, 'public/profesores', fileName);
 
+              const dir = path.join(__dirname, 'public/profesores');
+if (!fs.existsSync(dir)) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+
               fs.writeFileSync(filePath, base64Data, 'base64');
               imagen = `${req.protocol}://${req.get('host')}/imagenes/${fileName}`;
             }
