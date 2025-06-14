@@ -152,8 +152,11 @@ app.get('/profesores-sistemas', async (req, res) => {
         continue;
       }
 
-      // Nueva búsqueda: avanzar hasta encontrar la primera tabla que sigue al <h1>
-      const tabla = h1.nextAll().filter((i, el) => $(el).is('table')).first();
+      // Buscar primero en divs, si no hay, buscar tabla directa
+      let tabla = h1.nextAll('div').find('table').first();
+      if (!tabla.length) {
+        tabla = h1.nextAll().filter((i, el) => $(el).is('table')).first();
+      }
 
       if (!tabla.length) {
         console.warn(`⚠️ No se encontró la tabla después del <h1> "${encabezado.texto}"`);
@@ -199,6 +202,7 @@ app.get('/profesores-sistemas', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los profesores' });
   }
 });
+
 
 
 
