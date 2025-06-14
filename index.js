@@ -205,45 +205,30 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 
 const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
-const URL_BASE = 'https://www.unipamplona.edu.co';
+
 
 app.get('/programas-por-facultad', async (req, res) => {
   try {
     const { data } = await axios.get(URL_OFERTA, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
+      headers: { 'User-Agent': 'Mozilla/5.0' }
     });
 
     const $ = cheerio.load(data);
     const resultado = [];
 
-    const filas = $('table.table-inscripciones tr.table-row-inscripciones');
-
-    if (filas.length < 1) {
-      return res.status(500).json({ error: 'La tabla de programas no contiene filas. Verifica si cambió la estructura.' });
-    }
-
-    filas.each((_, row) => {
+    $('table.table-inscripciones tr.table-row-inscripciones').each((_, row) => {
       const columnas = $(row).find('td');
       if (columnas.length < 2) return;
 
-      const facultadHtml = $(columnas[0]);
-      const programasHtml = $(columnas[1]);
-
-      const nombreFacultad = facultadHtml.text().trim().replace(/\s+/g, ' ');
-
+      const facultad = $(columnas[0]).text().trim().replace(/\s+/g, ' ');
       const programas = [];
-      programasHtml.find('li.list-item-oferta').each((_, li) => {
-        const nombre = $(li).find('a.link-oferta').text().trim();
-        const href = $(li).find('a.link-oferta').attr('href') || '';
-        const url = href ? new URL(href, URL_BASE).href : null;
-        const info = $(li).find('.info-oferta').text().trim().replace(/\s+/g, ' ');
 
-        programas.push({ nombre, url, info });
+      $(columnas[1]).find('li.list-item-oferta').each((_, li) => {
+        const nombrePrograma = $(li).find('a.link-oferta').text().trim();
+        if (nombrePrograma) programas.push(nombrePrograma);
       });
 
-      resultado.push({ facultad: nombreFacultad, programas });
+      resultado.push({ facultad, programas });
     });
 
     res.json(resultado);
