@@ -131,6 +131,12 @@ app.get('/director-programa', async (req, res) => {
 
 
 
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid'); // Para nombres únicos
+
+app.use('/imagenes', express.static('public/profesores'));
+
 app.get('/profesores-sistemas', async (req, res) => {
   try {
     const { data } = await axios.get(URL2);
@@ -152,7 +158,6 @@ app.get('/profesores-sistemas', async (req, res) => {
         continue;
       }
 
-      // Buscar primero en divs, si no hay, buscar tabla directa
       let tabla = h1.nextAll('div').find('table').first();
       if (!tabla.length) {
         tabla = h1.nextAll().filter((i, el) => $(el).is('table')).first();
@@ -183,14 +188,26 @@ app.get('/profesores-sistemas', async (req, res) => {
           const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
 
           const imgTag = tdImagen.find('img');
-const imgSrc = imgTag.length ? imgTag.attr('src') : '';
+          let imagen = '';
+          const imgSrc = imgTag.length ? imgTag.attr('src') : '';
 
-const imagen = imgSrc
-  ? imgSrc.startsWith('http') || imgSrc.startsWith('data:')
-    ? imgSrc
-    : `${URL2.split('/unipamplona')[0]}${imgSrc}`
-  : '';
+          if (imgSrc.startsWith('data:image')) {
+            // Si es base64, convertir y guardar
+            const matches = imgSrc.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (matches) {
+              const ext = matches[1].split('/')[1]; // "png" o "jpeg"
+              const base64Data = matches[2];
+              const fileName = `${uuidv4()}.${ext}`;
+              const filePath = path.join(__dirname, 'public/profesores', fileName);
 
+              fs.writeFileSync(filePath, base64Data, 'base64');
+              imagen = `${req.protocol}://${req.get('host')}/imagenes/${fileName}`;
+            }
+          } else if (imgSrc) {
+            imagen = imgSrc.startsWith('http')
+              ? imgSrc
+              : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
+          }
 
           if (nombre) {
             profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
@@ -205,6 +222,7 @@ const imagen = imgSrc
     res.status(500).json({ error: 'Error al obtener los profesores' });
   }
 });
+
 
 
 
