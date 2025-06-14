@@ -206,15 +206,6 @@ app.get('/profesores-sistemas', async (req, res) => {
 
 const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
 
-
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
-
-const app = express();
-const PORT = 3000;
-const URL_OFERTA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_11/recursos/general/contenidos_subgeneral/inscripciones_presencial/21042014/ofertaacademica_2016.jsp';
-
 app.get('/programas-por-facultad', async (req, res) => {
   try {
     const { data } = await axios.get(URL_OFERTA, {
@@ -263,10 +254,6 @@ app.get('/programas-por-facultad', async (req, res) => {
       error: 'No se pudo obtener la información. Verifica que la página esté disponible y no haya cambiado el HTML.'
     });
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
 
 
