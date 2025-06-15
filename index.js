@@ -6,6 +6,8 @@ const cheerio = require('cheerio');
 const app = express();
 //const port = 3000;
 
+const port = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
@@ -367,7 +369,7 @@ app.get('/info-up', async (req, res) => {
 
 
 
-const port = process.env.PORT || 3000;
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
