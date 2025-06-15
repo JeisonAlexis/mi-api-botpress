@@ -438,6 +438,50 @@ app.get('/como-llegar', async (req, res) => {
   }
 });
 
+app.get('/fundador-up', async (req, res) => {
+  try {
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/universidad/23022015/preguntas_frecuentes.jsp';
+    const { data } = await axios.get(URL);
+    const $ = cheerio.load(data);
+
+    // Buscar por el texto del título
+    const bloqueFundador = $('p').filter((i, el) =>
+      $(el).text().toLowerCase().includes('¿quién es el fundador de la universidad')
+    ).first();
+
+    if (!bloqueFundador.length) {
+      return res.status(404).json({ error: 'No se encontró la sección del fundador.' });
+    }
+
+    const titulo = bloqueFundador.text().trim();
+
+    // Buscar la imagen en el siguiente <p>
+    const imgTag = bloqueFundador.nextAll('p').find('img').first();
+    const src = imgTag.attr('src') || '';
+    const imagen = src.startsWith('http')
+      ? src
+      : `https://www.unipamplona.edu.co${src}`;
+
+    // Buscar el párrafo con el contenido
+    const descripcionParrafo = bloqueFundador.nextAll('p').filter((i, el) =>
+      $(el).text().toLowerCase().includes('la universidad de pamplona fue fundada')
+    ).first();
+
+    const descripcion = descripcionParrafo.text().replace(/\s+/g, ' ').trim();
+
+    res.json({
+      titulo,
+      descripcion,
+      imagen,
+      url_origen: URL
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener información del fundador:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información del fundador.' });
+  }
+});
+
 
 
 app.listen(port, () => {
