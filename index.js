@@ -486,32 +486,32 @@ app.get('/fundador-up', async (req, res) => {
 
 app.get('/rector', async (req, res) => {
   try {
-    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
-    const { data } = await axios.get(URL);
-    const $ = cheerio.load(data);
+    const urlBiografia = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
+    const urlInfo = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/universidad/23022015/preguntas_frecuentes.jsp';
 
-    // 1. Buscar el <p><strong>Ivaldo Torres Chávez</strong></p>
-    const parrafoTitulo = $('p strong').filter((i, el) =>
-      $(el).text().trim().includes('Ivaldo Torres Chávez')
-    ).first();
-
-    const titulo = parrafoTitulo.text().trim();
-
-    // 2. El <p> que sigue después del título
-    const resumenHTML = parrafoTitulo.parent().next('p').html();
-    const resumen = resumenHTML
-      ? $('<div>').html(resumenHTML).text().replace(/\s+/g, ' ').trim()
-      : '';
-
-    // 3. Obtener la imagen del slider (posición 13)
-    const imgSrc = $('#coin-slider img').eq(12).attr('src');
+    // Obtener la imagen desde el slider en la página de biografía
+    const { data: htmlBio } = await axios.get(urlBiografia);
+    const $bio = cheerio.load(htmlBio);
+    const imgSrc = $bio('#coin-slider img').eq(12).attr('src');
     const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
 
+    // Obtener la descripción desde la sección de preguntas frecuentes
+    const { data: htmlInfo } = await axios.get(urlInfo);
+    const $info = cheerio.load(htmlInfo);
+
+    const parrafo = $info('p').filter((i, el) =>
+      $info(el).text().includes('¿Quién es el Rector de la Universidad?')
+    ).first().parent().text().trim().replace(/\s+/g, ' ');
+
+    const partes = parrafo.split('¿Quién es el Rector de la Universidad?');
+    const descripcion = partes[1]?.trim() || 'Información no disponible.';
+
+    // Enviar la respuesta unificada
     res.json({
-      titulo,
-      resumen,
+      titulo: 'Ivaldo Torres Chávez',
+      descripcion,
       imagen,
-      url_origen: URL
+      url_origen: urlInfo
     });
 
   } catch (error) {
@@ -519,6 +519,10 @@ app.get('/rector', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
+
+
+
+
 
 
 
