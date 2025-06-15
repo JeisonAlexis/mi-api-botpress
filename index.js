@@ -486,39 +486,41 @@ app.get('/fundador-up', async (req, res) => {
 
 app.get('/rector', async (req, res) => {
   try {
-    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp'; 
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
-    // Extraer título (nombre del rector)
-    const titulo = $('p:contains("Ivaldo Torres Chávez")').first().text().trim() || 'Ivaldo Torres Chávez';
-
-    // Encontrar el párrafo inicial de la biografía
-    const parrafoInicio = $('p').filter((i, el) => 
-      $(el).text().includes('El ingeniero electrónico, nacido en Magangué')
+    // 1. Buscar el <p><strong>Ivaldo Torres Chávez</strong></p>
+    const parrafoTitulo = $('p strong').filter((i, el) =>
+      $(el).text().trim().includes('Ivaldo Torres Chávez')
     ).first();
 
-    // Acumular párrafos hasta encontrar "Reconocimientos" o "Publicaciones"
-    const resumenParrafos = [];
-    let current = parrafoInicio;
-    while (current.length) {
-      const texto = current.text().trim();
-      if (/Reconocimientos|Publicaciones/i.test(texto)) break;
-      resumenParrafos.push(texto);
-      current = current.next('p'); // Solo considerar párrafos consecutivos
-    }
-    const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ');
+    const titulo = parrafoTitulo.text().trim();
 
-    // Extraer imagen (ajusta el selector según la estructura real)
-    const imagenSrc = $('#coin-slider img').eq(12).attr('src') || '';
-    const imagen = imagenSrc.startsWith('http') ? imagenSrc : `https://www.unipamplona.edu.co${imagenSrc}`; 
+    // 2. El <p> que sigue después del título
+    const resumenHTML = parrafoTitulo.parent().next('p').html();
+    const resumen = resumenHTML
+      ? $('<div>').html(resumenHTML).text().replace(/\s+/g, ' ').trim()
+      : '';
 
-    res.json({ titulo, resumen, imagen, url_origen: URL });
+    // 3. Obtener la imagen del slider (posición 13)
+    const imgSrc = $('#coin-slider img').eq(12).attr('src');
+    const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
+
+    res.json({
+      titulo,
+      resumen,
+      imagen,
+      url_origen: URL
+    });
+
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener la información.' });
+    console.error('❌ Error al obtener la información del rector:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
+
+
 
 
 
