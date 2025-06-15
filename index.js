@@ -482,6 +482,38 @@ app.get('/fundador-up', async (req, res) => {
   }
 });
 
+app.get('/rector', async (req, res) => {
+  try {
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
+    const { data } = await axios.get(URL);
+    const $ = cheerio.load(data);
+
+    const titulo = $('#pagcontenido h1').first().text().trim();
+
+    const contenidoHTML = $('#pagcontenidotexto').html();
+    const contenidoTexto = contenidoHTML
+      ? $('<div>').html(contenidoHTML).text().replace(/\s+/g, ' ').trim()
+      : null;
+
+    // Extraer imagen 13 del slider
+    const sliderImgs = $('#coin-slider img');
+    const img13 = sliderImgs.eq(12).attr('src');
+    const imagen = img13 ? `https://www.unipamplona.edu.co${img13}` : null;
+
+    res.json({
+      titulo,
+      resumen: contenidoTexto || 'No se pudo extraer el contenido del comunicado.',
+      imagen,
+      url_origen: URL
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener el comunicado del rector:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información del comunicado.' });
+  }
+});
+
+
 
 
 app.listen(port, () => {
