@@ -482,44 +482,53 @@ app.get('/fundador-up', async (req, res) => {
   }
 });
 
+
+
 app.get('/rector', async (req, res) => {
   try {
     const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
-    const titulo = $('strong').filter((i, el) =>
-      $(el).text().trim().includes('Ivaldo Torres')
-    ).first().text().trim();
+    // Buscar el bloque que contiene la biografía desde el título con el nombre
+    const bloqueInicio = $('strong').filter((i, el) =>
+      $(el).text().trim().includes('Ivaldo Torres Chávez')
+    ).first().closest('p');
 
-    // Buscar el párrafo donde aparece su perfil
-    const perfilHTML = $('p').filter((i, el) => {
-      const texto = $(el).text();
-      return texto.includes('ingeniero electrónico') && texto.includes('Universidad Rovira i Virgili');
-    }).parent().html();
+    if (!bloqueInicio.length) {
+      return res.status(404).json({ error: 'No se encontró el bloque de biografía del rector.' });
+    }
 
-    // Convertir HTML a texto plano limpio
-    const resumen = perfilHTML
-      ? $('<div>').html(perfilHTML).text().replace(/\s+/g, ' ').trim()
-      : null;
+    // Capturar los párrafos siguientes hasta que cambie de bloque
+    let resumen = '';
+    let nodo = bloqueInicio[0].nextSibling;
 
-    // Buscar la imagen del slider
+    while (nodo && nodo.name === 'p') {
+      const textoPlano = $(nodo).text().trim();
+      if (textoPlano.toLowerCase().includes('c.s') || textoPlano.includes('Síganos')) break;
+
+      resumen += textoPlano + '\n\n';
+      nodo = nodo.nextSibling;
+    }
+
+    resumen = resumen.replace(/\s+/g, ' ').trim();
+
+    // Capturar imagen del slider
     const img13 = $('#coin-slider img').eq(12).attr('src');
     const imagen = img13 ? `https://www.unipamplona.edu.co${img13}` : null;
 
     res.json({
-      titulo,
-      resumen: resumen || 'No se pudo extraer la biografía del rector.',
+      titulo: 'Ivaldo Torres Chávez',
+      resumen,
       imagen,
       url_origen: URL
     });
 
   } catch (error) {
     console.error('❌ Error al obtener el perfil del rector:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener el perfil del rector.' });
+    res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
-
 
 
 
