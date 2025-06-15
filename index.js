@@ -270,6 +270,50 @@ app.get('/programas-por-facultad', async (req, res) => {
   }
 });
 
+const URL_SEDES = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/pagina_2018/11042018/campus.jsp'; 
+
+app.get('/sedes-campus', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL_SEDES);
+    const $ = cheerio.load(data);
+
+    const sedes = [];
+
+    $('h2').each((i, el) => {
+      const titulo = $(el).text().trim().toLowerCase();
+
+      if (titulo.includes('sedes y campus')) {
+        const lista = $(el).next('.bordeContenidos').find('li');
+
+        lista.each((_, li) => {
+          const html = $(li).html();
+
+          const nombre = $(li).find('strong').text().trim();
+          const textoPlano = $(li).text().replace(/\s+/g, ' ').trim();
+
+          const direccion = textoPlano.split('Teléfono')[0].replace(nombre, '').trim();
+          const telefonos = textoPlano.match(/Tel[eé]fono:\s*([^\n<]+)/i)?.[1].trim() || '';
+          const correo = textoPlano.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
+
+          sedes.push({
+            nombre,
+            direccion,
+            telefonos,
+            correo: correo || null
+          });
+        });
+      }
+    });
+
+    res.json(sedes);
+
+  } catch (error) {
+    console.error('❌ Error al obtener las sedes:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información de sedes y campus.' });
+  }
+});
+
+
 
 
 const port = process.env.PORT || 3000;
