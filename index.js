@@ -490,24 +490,22 @@ app.get('/rector', async (req, res) => {
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
-    // Buscar el párrafo que contiene el nombre "Ivaldo Torres Chávez"
-    const parrafoInicio = $('p').filter((i, el) =>
+    const titulo = $('p strong').filter((i, el) =>
       $(el).text().trim().includes('Ivaldo Torres Chávez')
+    ).first().text().trim();
+
+    // Buscar el párrafo con el nombre y luego todos los siguientes hasta los "Reconocimientos"
+    const parrafoInicio = $('p').filter((i, el) =>
+      $(el).text().includes('Ivaldo Torres Chávez')
     ).first();
 
-    if (!parrafoInicio.length) {
-      return res.status(404).json({ error: 'No se encontró el párrafo de biografía.' });
-    }
-
-    // Tomar todos los <p> siguientes hasta que aparezca "Reconocimientos" o "C.S."
     const resumenParrafos = [];
     let next = parrafoInicio.next();
 
     while (next.length && next[0].tagName === 'p') {
       const texto = next.text().trim();
 
-      // Cortar si llegan los créditos o secciones distintas
-      if (/c\.s|Reconocimientos|Publicaciones/i.test(texto)) break;
+      if (/Reconocimientos|Publicaciones/i.test(texto)) break;
 
       resumenParrafos.push(texto);
       next = next.next();
@@ -515,12 +513,12 @@ app.get('/rector', async (req, res) => {
 
     const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ').trim();
 
-    // Obtener imagen del slider
-    const img13 = $('#coin-slider img').eq(12).attr('src');
-    const imagen = img13 ? `https://www.unipamplona.edu.co${img13}` : null;
+    // Obtener la imagen (la que está debajo del título en el slider)
+    const imgSrc = $('#coin-slider img').eq(12).attr('src');
+    const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
 
     res.json({
-      titulo: 'Ivaldo Torres Chávez',
+      titulo,
       resumen,
       imagen,
       url_origen: URL
@@ -531,6 +529,7 @@ app.get('/rector', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
+
 
 
 
