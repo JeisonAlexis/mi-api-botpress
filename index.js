@@ -488,30 +488,38 @@ app.get('/rector', async (req, res) => {
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
-    const titulo = $('#pagcontenido h1').first().text().trim();
+    const titulo = $('strong').filter((i, el) =>
+      $(el).text().trim().includes('Ivaldo Torres')
+    ).first().text().trim();
 
-    const contenidoHTML = $('#pagcontenidotexto').html();
-    const contenidoTexto = contenidoHTML
-      ? $('<div>').html(contenidoHTML).text().replace(/\s+/g, ' ').trim()
+    // Buscar el párrafo donde aparece su perfil
+    const perfilHTML = $('p').filter((i, el) => {
+      const texto = $(el).text();
+      return texto.includes('ingeniero electrónico') && texto.includes('Universidad Rovira i Virgili');
+    }).parent().html();
+
+    // Convertir HTML a texto plano limpio
+    const resumen = perfilHTML
+      ? $('<div>').html(perfilHTML).text().replace(/\s+/g, ' ').trim()
       : null;
 
-    // Extraer imagen 13 del slider
-    const sliderImgs = $('#coin-slider img');
-    const img13 = sliderImgs.eq(12).attr('src');
+    // Buscar la imagen del slider
+    const img13 = $('#coin-slider img').eq(12).attr('src');
     const imagen = img13 ? `https://www.unipamplona.edu.co${img13}` : null;
 
     res.json({
       titulo,
-      resumen: contenidoTexto || 'No se pudo extraer el contenido del comunicado.',
+      resumen: resumen || 'No se pudo extraer la biografía del rector.',
       imagen,
       url_origen: URL
     });
 
   } catch (error) {
-    console.error('❌ Error al obtener el comunicado del rector:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener la información del comunicado.' });
+    console.error('❌ Error al obtener el perfil del rector:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener el perfil del rector.' });
   }
 });
+
 
 
 
