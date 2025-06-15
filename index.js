@@ -494,13 +494,13 @@ app.get('/rector', async (req, res) => {
       $(el).text().trim().includes('Ivaldo Torres Chávez')
     ).first().text().trim();
 
-    // Buscar el párrafo con el nombre y luego todos los siguientes hasta los "Reconocimientos"
+    // Usamos texto decodificado para detectar el párrafo
     const parrafoInicio = $('p').filter((i, el) =>
-      $(el).text().includes('El ingeniero electr&oacute;nico, nacido en Magangu&eacute;,&nbsp; egresado de la Universidad de Pamplona, Ph.D Ivaldo Torres Ch&aacute')
+      $(el).text().toLowerCase().includes('el ingeniero electrónico, nacido en magangué')
     ).first();
 
     const resumenParrafos = [];
-    let next = parrafoInicio.next();
+    let next = parrafoInicio;
 
     while (next.length && next[0].tagName === 'p') {
       const texto = next.text().trim();
@@ -513,7 +513,7 @@ app.get('/rector', async (req, res) => {
 
     const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ').trim();
 
-    // Obtener la imagen (la que está debajo del título en el slider)
+    // Imagen desde el slider
     const imgSrc = $('#coin-slider img').eq(12).attr('src');
     const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
 
@@ -529,6 +529,7 @@ app.get('/rector', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
+
 
 
 
