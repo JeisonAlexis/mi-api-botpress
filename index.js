@@ -366,6 +366,43 @@ app.get('/info-up', async (req, res) => {
   }
 });
 
+app.get('/sedes-regionales', async (req, res) => {
+  try {
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/universidad/23022015/preguntas_frecuentes.jsp';
+    const { data } = await axios.get(URL);
+    const $ = cheerio.load(data);
+
+    // Bloque principal debajo del párrafo con la frase clave
+    const bloque = $('p').filter((i, el) =>
+      $(el).text().includes('la Universidad cuenta con tres sedes regionales')
+    ).first();
+
+    if (!bloque.length) {
+      return res.status(404).json({ error: 'No se encontró el bloque de sedes regionales.' });
+    }
+
+    // Extraer sedes presenciales/pregrado
+    const presList = bloque.next('ul').first();
+    const presSedes = presList.find('li').map((_, li) => $(li).text().trim()).get();
+
+    // Extraer sedes CREAD a partir del siguiente párrafo
+    const creadParagraph = presList.next('p').filter((i, el) =>
+      $(el).text().includes('En presencial – distancia')
+    ).first();
+    const creadList = creadParagraph.next('ul').first();
+    const creadSedes = creadList.find('li').map((_, li) => $(li).text().trim()).get();
+
+    res.json({
+      presenciales: presSedes,
+      cread: creadSedes,
+      url_origen: URL
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener sedes regionales:', error.message);
+    res.status(500).json({ error: 'No se pudo extraer la información de sedes regionales.' });
+  }
+});
 
 
 
