@@ -486,49 +486,39 @@ app.get('/fundador-up', async (req, res) => {
 
 app.get('/rector', async (req, res) => {
   try {
-    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp'; 
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
-    // Título correcto
-    const titulo = $('p strong').filter((i, el) =>
-      $(el).text().trim().toLowerCase() === 'ivaldo torres chávez'
-    ).first().text().trim() || 'Ivaldo Torres Chávez';
+    // Extraer título (nombre del rector)
+    const titulo = $('p:contains("Ivaldo Torres Chávez")').first().text().trim() || 'Ivaldo Torres Chávez';
 
-    // Buscar el párrafo específico que empieza con la biografía real
-    const parrafoInicio = $('p').filter((i, el) =>
-      $(el).text().toLowerCase().includes('el ingeniero electrónico, nacido en magangué')
+    // Encontrar el párrafo inicial de la biografía
+    const parrafoInicio = $('p').filter((i, el) => 
+      $(el).text().includes('El ingeniero electrónico, nacido en Magangué')
     ).first();
 
-    // Tomar ese párrafo y los siguientes hasta que empiece "Reconocimientos"
+    // Acumular párrafos hasta encontrar "Reconocimientos" o "Publicaciones"
     const resumenParrafos = [];
-    let next = parrafoInicio;
-    while (next.length && next[0].tagName === 'p') {
-      const textoPlano = next.text().trim();
-      if (/Reconocimientos|Publicaciones/i.test(textoPlano)) break;
-      resumenParrafos.push(textoPlano);
-      next = next.next();
+    let current = parrafoInicio;
+    while (current.length) {
+      const texto = current.text().trim();
+      if (/Reconocimientos|Publicaciones/i.test(texto)) break;
+      resumenParrafos.push(texto);
+      current = current.next('p'); // Solo considerar párrafos consecutivos
     }
+    const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ');
 
-    const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ').trim();
+    // Extraer imagen (ajusta el selector según la estructura real)
+    const imagenSrc = $('#coin-slider img').eq(12).attr('src') || '';
+    const imagen = imagenSrc.startsWith('http') ? imagenSrc : `https://www.unipamplona.edu.co${imagenSrc}`; 
 
-    // Imagen: slider número 13 (como ya tienes configurado)
-    const imgSrc = $('#coin-slider img').eq(12).attr('src');
-    const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
-
-    res.json({
-      titulo,
-      resumen,
-      imagen,
-      url_origen: URL
-    });
-
+    res.json({ titulo, resumen, imagen, url_origen: URL });
   } catch (error) {
-    console.error('❌ Error al obtener la biografía del rector:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
+    console.error('❌ Error:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información.' });
   }
 });
-
 
 
 
