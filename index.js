@@ -313,6 +313,33 @@ app.get('/sedes-campus', async (req, res) => {
   }
 });
 
+const OLLAMA_URL = 'https://8f65-190-60-32-37.ngrok-free.app';
+
+app.post('/mistral', async (req, res) => {
+  const prompt = req.body.prompt;
+
+  if (!prompt) return res.status(400).json({ error: 'Prompt no proporcionado' });
+
+  try {
+    const response = await fetch(`${OLLAMA_URL}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'mistral',
+        prompt: prompt,
+        stream: false
+      })
+    });
+
+    const data = await response.json();
+    return res.json({ respuesta: data.response || 'Sin respuesta' });
+  } catch (err) {
+    console.error('❌ Error conectando a Ollama:', err.message);
+    return res.status(500).json({ error: 'Error conectando a Ollama' });
+  }
+});
+
+
 
 
 
