@@ -333,12 +333,23 @@ app.get('/info-up', async (req, res) => {
       : `https://www.unipamplona.edu.co${imgSrc}`;
 
     const titulo = bloque.find('strong').first().text().trim();
-    const descripcion = bloque.find('p').last().text().trim().replace(/\s+/g, ' ');
+
+    const descripcionHtml = bloque.find('p').eq(1).html();
+    const descripcionTexto = descripcionHtml
+      ?.replace(/<[^>]+>/g, '') // Elimina etiquetas HTML
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&[a-z]+;/gi, match => {
+        const temp = document.createElement("textarea");
+        temp.innerHTML = match;
+        return temp.value;
+      })
+      .trim();
 
     res.json({
       titulo,
-      descripcion,
-      imagen
+      descripcion: descripcionTexto,
+      imagen,
+      url_para_mas_informacion: URL
     });
 
   } catch (error) {
@@ -346,6 +357,7 @@ app.get('/info-up', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información de preguntas frecuentes.' });
   }
 });
+
 
 
 const port = process.env.PORT || 3000;
