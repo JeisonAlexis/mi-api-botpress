@@ -313,34 +313,39 @@ app.get('/sedes-campus', async (req, res) => {
   }
 });
 
-const OLLAMA_URL = 'https://8f65-190-60-32-37.ngrok-free.app';
-
-app.post('/mistral', async (req, res) => {
-  const prompt = req.body.prompt;
-
-  if (!prompt) return res.status(400).json({ error: 'Prompt no proporcionado' });
-
+app.get('/info-up', async (req, res) => {
   try {
-    const response = await fetch(`${OLLAMA_URL}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'mistral',
-        prompt: prompt,
-        stream: false
-      })
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/universidad/23022015/preguntas_frecuentes.jsp'; 
+    const { data } = await axios.get(URL);
+    const $ = cheerio.load(data);
+
+    const bloque = $('h2').filter((i, el) =>
+      $(el).text().toLowerCase().includes('preguntas frecuentes')
+    ).first().next('.bordeContenidos');
+
+    if (!bloque.length) {
+      return res.status(404).json({ error: 'No se encontró el bloque de preguntas frecuentes.' });
+    }
+
+    const imgSrc = bloque.find('img').attr('src') || '';
+    const imagen = imgSrc.startsWith('http')
+      ? imgSrc
+      : `https://www.unipamplona.edu.co${imgSrc}`;
+
+    const titulo = bloque.find('strong').first().text().trim();
+    const descripcion = bloque.find('p').last().text().trim().replace(/\s+/g, ' ');
+
+    res.json({
+      titulo,
+      descripcion,
+      imagen
     });
 
-    const data = await response.json();
-    return res.json({ respuesta: data.response || 'Sin respuesta' });
-  } catch (err) {
-    console.error('❌ Error conectando a Ollama:', err.message);
-    return res.status(500).json({ error: 'Error conectando a Ollama' });
+  } catch (error) {
+    console.error('❌ Error al obtener las preguntas frecuentes:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información de preguntas frecuentes.' });
   }
 });
-
-
-
 
 
 const port = process.env.PORT || 3000;
