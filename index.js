@@ -361,7 +361,7 @@ app.get('/info-up', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error al obtener las preguntas frecuentes:', error.message);
+    console.error('❌ Error al obtener las preguntas frecuentes: ', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información de preguntas frecuentes.' });
   }
 });
