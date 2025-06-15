@@ -490,30 +490,29 @@ app.get('/rector', async (req, res) => {
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
+    // Título correcto
     const titulo = $('p strong').filter((i, el) =>
-      $(el).text().trim().includes('Ivaldo Torres Chávez')
-    ).first().text().trim();
+      $(el).text().trim().toLowerCase() === 'ivaldo torres chávez'
+    ).first().text().trim() || 'Ivaldo Torres Chávez';
 
-    // Usamos texto decodificado para detectar el párrafo
+    // Buscar el párrafo específico que empieza con la biografía real
     const parrafoInicio = $('p').filter((i, el) =>
       $(el).text().toLowerCase().includes('el ingeniero electrónico, nacido en magangué')
     ).first();
 
+    // Tomar ese párrafo y los siguientes hasta que empiece "Reconocimientos"
     const resumenParrafos = [];
     let next = parrafoInicio;
-
     while (next.length && next[0].tagName === 'p') {
-      const texto = next.text().trim();
-
-      if (/Reconocimientos|Publicaciones/i.test(texto)) break;
-
-      resumenParrafos.push(texto);
+      const textoPlano = next.text().trim();
+      if (/Reconocimientos|Publicaciones/i.test(textoPlano)) break;
+      resumenParrafos.push(textoPlano);
       next = next.next();
     }
 
     const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ').trim();
 
-    // Imagen desde el slider
+    // Imagen: slider número 13 (como ya tienes configurado)
     const imgSrc = $('#coin-slider img').eq(12).attr('src');
     const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
 
@@ -529,6 +528,7 @@ app.get('/rector', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
+
 
 
 
