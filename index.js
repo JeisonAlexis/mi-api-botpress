@@ -490,30 +490,32 @@ app.get('/rector', async (req, res) => {
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
-    // Buscar el bloque que contiene la biografía desde el título con el nombre
-    const bloqueInicio = $('strong').filter((i, el) =>
+    // Buscar el párrafo que contiene el nombre "Ivaldo Torres Chávez"
+    const parrafoInicio = $('p').filter((i, el) =>
       $(el).text().trim().includes('Ivaldo Torres Chávez')
-    ).first().closest('p');
+    ).first();
 
-    if (!bloqueInicio.length) {
-      return res.status(404).json({ error: 'No se encontró el bloque de biografía del rector.' });
+    if (!parrafoInicio.length) {
+      return res.status(404).json({ error: 'No se encontró el párrafo de biografía.' });
     }
 
-    // Capturar los párrafos siguientes hasta que cambie de bloque
-    let resumen = '';
-    let nodo = bloqueInicio[0].nextSibling;
+    // Tomar todos los <p> siguientes hasta que aparezca "Reconocimientos" o "C.S."
+    const resumenParrafos = [];
+    let next = parrafoInicio.next();
 
-    while (nodo && nodo.name === 'p') {
-      const textoPlano = $(nodo).text().trim();
-      if (textoPlano.toLowerCase().includes('c.s') || textoPlano.includes('Síganos')) break;
+    while (next.length && next[0].tagName === 'p') {
+      const texto = next.text().trim();
 
-      resumen += textoPlano + '\n\n';
-      nodo = nodo.nextSibling;
+      // Cortar si llegan los créditos o secciones distintas
+      if (/c\.s|Reconocimientos|Publicaciones/i.test(texto)) break;
+
+      resumenParrafos.push(texto);
+      next = next.next();
     }
 
-    resumen = resumen.replace(/\s+/g, ' ').trim();
+    const resumen = resumenParrafos.join('\n\n').replace(/\s+/g, ' ').trim();
 
-    // Capturar imagen del slider
+    // Obtener imagen del slider
     const img13 = $('#coin-slider img').eq(12).attr('src');
     const imagen = img13 ? `https://www.unipamplona.edu.co${img13}` : null;
 
@@ -525,7 +527,7 @@ app.get('/rector', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error al obtener el perfil del rector:', error.message);
+    console.error('❌ Error al obtener la biografía del rector:', error.message);
     res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
