@@ -334,14 +334,20 @@ app.get('/info-up', async (req, res) => {
 
     const titulo = bloque.find('strong').first().text().trim();
 
-    const descripcionHtml = bloque.find('p').eq(1).html();
+    // Este es el párrafo con la descripción real (tercer <p>)
+    const descripcionHtml = bloque.find('p').eq(2).html() || '';
     const descripcionTexto = descripcionHtml
-      ?.replace(/<[^>]+>/g, '') // Elimina etiquetas HTML
+      .replace(/<[^>]+>/g, '') // Elimina etiquetas HTML
       .replace(/&nbsp;/g, ' ')
-      .replace(/&[a-z]+;/gi, match => {
-        const temp = document.createElement("textarea");
-        temp.innerHTML = match;
-        return temp.value;
+      .replace(/&([a-z]+);/gi, (match, entity) => {
+        // Decodifica entidades HTML comunes
+        const entities = {
+          amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+          ntilde: 'ñ', Ntilde: 'Ñ', aacute: 'á', Aacute: 'Á',
+          eacute: 'é', Eacute: 'É', iacute: 'í', Iacute: 'Í',
+          oacute: 'ó', Oacute: 'Ó', uacute: 'ú', Uacute: 'Ú'
+        };
+        return entities[entity] || match;
       })
       .trim();
 
@@ -357,6 +363,7 @@ app.get('/info-up', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información de preguntas frecuentes.' });
   }
 });
+
 
 
 
