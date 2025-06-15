@@ -404,7 +404,39 @@ app.get('/sedes-regionales', async (req, res) => {
   }
 });
 
+const URL_MAPA = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/universidad/23022015/preguntas_frecuentes.jsp';
 
+app.get('/como-llegar', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL_MAPA);
+    const $ = cheerio.load(data);
+
+    // Buscar el párrafo que contiene el texto y luego buscar la imagen siguiente
+    const tituloParrafo = $('p').filter((i, el) =>
+      $(el).text().toLowerCase().includes('¿cómo llegar al campus')
+    ).first();
+
+    const img = tituloParrafo.next('p').find('img').attr('src');
+
+    if (!img) {
+      return res.status(404).json({ error: 'No se encontró la imagen del mapa.' });
+    }
+
+    const imagenUrl = img.startsWith('http')
+      ? img
+      : `https://www.unipamplona.edu.co${img}`;
+
+    res.json({
+      titulo: '¿Cómo llegar al Campus de la Universidad?',
+      imagen: imagenUrl,
+      url_origen: URL_MAPA
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener el mapa:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la imagen del mapa.' });
+  }
+});
 
 
 
