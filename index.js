@@ -496,7 +496,7 @@ app.get('/rector', async (req, res) => {
 
     // Buscar el párrafo con el nombre y luego todos los siguientes hasta los "Reconocimientos"
     const parrafoInicio = $('p').filter((i, el) =>
-      $(el).text().includes('Ivaldo Torres Chávez')
+      $(el).text().includes('El ingeniero electr&oacute;nico, nacido en Magangu&eacute;,&nbsp; egresado de la Universidad de Pamplona, Ph.D Ivaldo Torres Ch&aacute')
     ).first();
 
     const resumenParrafos = [];
