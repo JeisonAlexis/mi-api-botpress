@@ -489,25 +489,29 @@ app.get('/rector', async (req, res) => {
     const urlInfo = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/universidad/23022015/preguntas_frecuentes.jsp';
     const urlImagen = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/noticias_2016/diciembre/29122016/rector_2017-2020.jsp';
 
-    // Obtener la imagen desde el slider
+    // Obtener la imagen del slider (posición 13)
     const { data: htmlSlider } = await axios.get(urlImagen);
     const $slider = cheerio.load(htmlSlider);
     const imgSrc = $slider('#coin-slider img').eq(12).attr('src');
     const imagen = imgSrc ? `https://www.unipamplona.edu.co${imgSrc}` : null;
 
-    // Obtener un solo <p> debajo del texto de título desde preguntas frecuentes
+    // Obtener el <p> que contiene el título y la descripción
     const { data: htmlInfo } = await axios.get(urlInfo);
     const $ = cheerio.load(htmlInfo);
 
-    const parrafoTitulo = $('p').filter((i, el) =>
+    const parrafoCompleto = $('p').filter((i, el) =>
       $(el).text().includes('¿Quién es el Rector de la Universidad?')
     ).first();
 
-    const parrafoDescripcion = parrafoTitulo.next('p').text().trim().replace(/\s+/g, ' ');
+    const descripcion = parrafoCompleto
+      .text()
+      .replace('¿Quién es el Rector de la Universidad?', '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     res.json({
       titulo: 'Ivaldo Torres Chávez',
-      descripcion: parrafoDescripcion || 'Información no disponible.',
+      descripcion,
       imagen,
       url_origen: urlInfo
     });
@@ -517,6 +521,7 @@ app.get('/rector', async (req, res) => {
     res.status(500).json({ error: 'No se pudo obtener la información del rector.' });
   }
 });
+
 
 
 
