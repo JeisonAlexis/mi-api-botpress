@@ -240,7 +240,7 @@ app.get('/profesores', async (req, res) => {
 
     const encabezados = [
       { texto: 'Docentes Tiempo Completo', puesto: 'Tiempo Completo' },
-      { texto: 'Docentes Tiempo Completo Ocasional', puesto: 'Ocasional'}
+      { texto: 'Docentes Tiempo Completo Ocasional', puesto: 'Ocasional'},
       { texto: 'Profesores Hora Cátedra', puesto: 'Cátedra'}
     ];
 
