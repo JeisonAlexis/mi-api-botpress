@@ -237,36 +237,68 @@ app.get('/profesores', async (req, res) => {
     const $ = cheerio.load(data);
 
     const categorias = [
-      'Docentes Tiempo Completo',
-      'Docentes Tiempo Completo Ocasional y Cátedra',
-      'Docentes Tiempo Completo Ocasional'
+      { 
+        texto: 'Docentes Tiempo Completo', 
+        puesto: 'Tiempo Completo',
+        tipo: 'completo' 
+      },
+      { 
+        texto: 'Docentes Tiempo Completo Ocasional y Cátedra', 
+        puesto: 'Ocasional o Cátedra',
+        tipo: 'ocasional' 
+      },
+      { 
+        texto: 'Profesores Hora Cátedra', 
+        puesto: 'Hora Cátedra',
+        tipo: 'catedra' 
+      }
     ];
+
     const result = [];
 
-    categorias.forEach(categoria => {
+    for (const categoria of categorias) {
       const header = $('h1').filter((i, el) =>
-        $(el).text().trim() === categoria
+        $(el).text().trim() === categoria.texto
       ).first();
 
-      if (header.length) {
-        const tabla = header.nextAll('table').first();
-        const filas = tabla.find('tr');
+      if (!header.length) {
+        console.warn(`⚠️ No se encontró el encabezado: ${categoria.texto}`);
+        continue;
+      }
 
-        filas.each((_, tr) => {
-          const tdTexto = $(tr).find('td').first();
-          const tdImg = $(tr).find('td').last();
+      let tabla = header.next('table');
+      if (!tabla.length) {
+        tabla = header.nextAll('table').first();
+      }
 
-          const nombre = tdTexto.find('strong').text().trim().replace(/\s+/g, ' ');
+      if (!tabla.length) {
+        console.warn(`⚠️ No se encontró tabla para: ${categoria.texto}`);
+        continue;
+      }
+
+      const filas = tabla.find('tr');
+
+      filas.each((_, fila) => {
+        const celdas = $(fila).find('td');
+        if (celdas.length < 2) return;
+
+        // Handle both single professor per row and two professors per row cases
+        for (let i = 0; i < celdas.length; i += 2) {
+          const tdTexto = $(celdas[i]);
+          const tdImg = $(celdas[i + 1]);
+
+          const nombre = tdTexto.find('strong').first().text().trim().replace(/\s+/g, ' ');
           const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
           // Check for "Hoja de Vida" link
-          const hasHojaVida = tdTexto.find('a[href*="hoja_vida"]').length > 0 || 
-                             tdTexto.find('a[title*="hoja_de_vida"]').length > 0;
+          const hasHojaVida = tdTexto.find('a[href*="hoja_vida"], a[title*="hoja_de_vida"]').length > 0;
 
           // Extract information
-          const resolucion = '';
-          
-          const cargo = categoria.includes('Ocasional') ? 'Ocasional o Cátedra' : 'Tiempo Completo';
+          const resolucionMatch = textoCompleto.match(/Resolu(?:ci|)ón\s*([^<\n]+)/i);
+          const resolucion = resolucionMatch ? resolucionMatch[0].trim() : '';
+
+          const cargoMatch = textoCompleto.match(/Profesor[oa] (?:Titular|Asociado|Asistente).+?(?=Registro|Contacto|$)/i);
+          const cargo = cargoMatch ? cargoMatch[0].trim() : categoria.puesto;
 
           const correoMatch = textoCompleto.match(/Contacto:\s*([^\s]+@[^\s]+)/i);
           let correo = correoMatch ? correoMatch[1] : '';
@@ -297,12 +329,17 @@ app.get('/profesores', async (req, res) => {
               correo,
               campus,
               cvlac: cvlacUrl,
-              imagen
+              imagen,
+              tipo: categoria.tipo
             });
           }
-        });
-      }
-    });
+        }
+      });
+    }
+
+    // If you want to filter by type in the response
+    // const filteredResult = result.filter(prof => prof.tipo === 'ocasional');
+    // res.json(filteredResult);
 
     res.json(result);
   } catch (err) {
