@@ -239,7 +239,7 @@ app.get('/profesores', async (req, res) => {
     const categorias = [
       'Docentes Tiempo Completo',
       'Docentes Tiempo Completo Ocasional y Cátedra',
-      'Docentes Tiempo Completo Ocasional' // Added this based on the HTML sample
+      'Docentes Tiempo Completo Ocasional'
     ];
     const result = [];
 
@@ -256,22 +256,31 @@ app.get('/profesores', async (req, res) => {
           const tdTexto = $(tr).find('td').first();
           const tdImg = $(tr).find('td').last();
 
-          const nombre = tdTexto.find('strong').text().trim();
+          const nombre = tdTexto.find('strong').text().trim().replace(/\s+/g, ' ');
           const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
+          // Check for "Hoja de Vida" link
+          const hasHojaVida = tdTexto.find('a[href*="hoja_vida"]').length > 0 || 
+                             tdTexto.find('a[title*="hoja_de_vida"]').length > 0;
+
           // Extract information
-          const resolucionMatch = textoCompleto.match(/Resolu(?:ci|)ón (\d+.+?)(?=Profes|$)/i);
-          const resolucion = resolucionMatch ? resolucionMatch[0].trim() : '';
+          const resolucion = '';
           
-          const cargoMatch = textoCompleto.match(/(Profesor[oa] (?:Titular|Asociado|Asistente).+?)(?=Registro|Contacto|$)/i);
-          const cargo = cargoMatch ? cargoMatch[1].trim() : 
-                        categoria.includes('Ocasional') ? 'Ocasional o Cátedra' : 'Tiempo Completo';
+          const cargo = categoria.includes('Ocasional') ? 'Ocasional o Cátedra' : 'Tiempo Completo';
 
           const correoMatch = textoCompleto.match(/Contacto:\s*([^\s]+@[^\s]+)/i);
-          const correo = correoMatch ? correoMatch[1] : '';
+          let correo = correoMatch ? correoMatch[1] : '';
+          // Append "Campus:" to email if not already present
+          if (correo && !correo.includes('Campus:')) {
+            correo = correo + 'Campus:';
+          }
 
           const campusMatch = textoCompleto.match(/Campus:\s*([^\n]+)/i);
-          const campus = campusMatch ? campusMatch[1].trim() : '';
+          let campus = campusMatch ? campusMatch[1].trim() : '';
+          // Append "Hoja de Vida" if the link exists
+          if (hasHojaVida && !campus.includes('Hoja de Vida')) {
+            campus += ' Hoja de Vida';
+          }
 
           const cvlacUrl = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
 
