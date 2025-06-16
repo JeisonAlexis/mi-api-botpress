@@ -232,7 +232,7 @@ if (!fs.existsSync(dir)) {
 
 app.get('/profesores', async (req, res) => {
   try {
-    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/...'; // URL correcta
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_villa.jsp'; // URL correcta
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
