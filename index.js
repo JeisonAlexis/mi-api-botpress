@@ -232,13 +232,14 @@ if (!fs.existsSync(dir)) {
 
 app.get('/profesores', async (req, res) => {
   try {
-    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_villa.jsp'; // URL correcta
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_villa.jsp';
     const { data } = await axios.get(URL);
     const $ = cheerio.load(data);
 
     const categorias = [
       'Docentes Tiempo Completo',
       'Docentes Tiempo Completo Ocasional y Cátedra',
+      'Docentes Tiempo Completo Ocasional' // Added this based on the HTML sample
     ];
     const result = [];
 
@@ -247,39 +248,51 @@ app.get('/profesores', async (req, res) => {
         $(el).text().trim() === categoria
       ).first();
 
-      const tabla = header.nextAll('table').first();
-      const filas = tabla.find('tr');
+      if (header.length) {
+        const tabla = header.nextAll('table').first();
+        const filas = tabla.find('tr');
 
-      filas.each((_, tr) => {
-        const tdTexto = $(tr).find('td').first();
-        const tdImg = $(tr).find('td').last();
+        filas.each((_, tr) => {
+          const tdTexto = $(tr).find('td').first();
+          const tdImg = $(tr).find('td').last();
 
-        const nombre = tdTexto.find('strong').text().trim();
-        const textoCompleto = tdTexto.html().replace(/<br\s*\/?>/gi, ' ').replace(/<\/?[^>]+>/g, '').trim();
+          const nombre = tdTexto.find('strong').text().trim();
+          const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
-        const correoMatch = textoCompleto.match(/Contacto:\s*([\w.-]+@[\w.-]+\.\w+)/i);
-        const correo = correoMatch ? correoMatch[1] : '';
-        const campusMatch = textoCompleto.match(/Campus:\s*([^ ]+)/i);
-        const campus = campusMatch ? campusMatch[1] : '';
-        const cvlacUrl = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+          // Extract information
+          const resolucionMatch = textoCompleto.match(/Resolu(?:ci|)ón (\d+.+?)(?=Profes|$)/i);
+          const resolucion = resolucionMatch ? resolucionMatch[0].trim() : '';
+          
+          const cargoMatch = textoCompleto.match(/(Profesor[oa] (?:Titular|Asociado|Asistente).+?)(?=Registro|Contacto|$)/i);
+          const cargo = cargoMatch ? cargoMatch[1].trim() : 
+                        categoria.includes('Ocasional') ? 'Ocasional o Cátedra' : 'Tiempo Completo';
 
-        const imgSrc = tdImg.find('img').attr('src') || '';
-        const imagen = imgSrc
-          ? (imgSrc.startsWith('http') ? imgSrc : `https://www.unipamplona.edu.co${imgSrc}`)
-          : '';
+          const correoMatch = textoCompleto.match(/Contacto:\s*([^\s]+@[^\s]+)/i);
+          const correo = correoMatch ? correoMatch[1] : '';
 
-        if (nombre) {
-          result.push({
-            nombre,
-            resolucion: textoCompleto.split(',')[0] || '',
-            cargo: categoria.includes('Ocasional') ? 'Ocasional o Cátedra' : 'Tiempo Completo',
-            correo,
-            campus,
-            cvlac: cvlacUrl,
-            imagen
-          });
-        }
-      });
+          const campusMatch = textoCompleto.match(/Campus:\s*([^\n]+)/i);
+          const campus = campusMatch ? campusMatch[1].trim() : '';
+
+          const cvlacUrl = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+
+          const imgSrc = tdImg.find('img').attr('src') || '';
+          const imagen = imgSrc
+            ? (imgSrc.startsWith('http') ? imgSrc : `https://www.unipamplona.edu.co${imgSrc}`)
+            : '';
+
+          if (nombre) {
+            result.push({
+              nombre,
+              resolucion,
+              cargo,
+              correo,
+              campus,
+              cvlac: cvlacUrl,
+              imagen
+            });
+          }
+        });
+      }
     });
 
     res.json(result);
