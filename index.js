@@ -230,6 +230,64 @@ if (!fs.existsSync(dir)) {
   }
 });
 
+app.get('/profesores', async (req, res) => {
+  try {
+    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/...'; // URL correcta
+    const { data } = await axios.get(URL);
+    const $ = cheerio.load(data);
+
+    const categorias = [
+      'Docentes Tiempo Completo',
+      'Docentes Tiempo Completo Ocasional y Cátedra',
+    ];
+    const result = [];
+
+    categorias.forEach(categoria => {
+      const header = $('h1').filter((i, el) =>
+        $(el).text().trim() === categoria
+      ).first();
+
+      const tabla = header.nextAll('table').first();
+      const filas = tabla.find('tr');
+
+      filas.each((_, tr) => {
+        const tdTexto = $(tr).find('td').first();
+        const tdImg = $(tr).find('td').last();
+
+        const nombre = tdTexto.find('strong').text().trim();
+        const textoCompleto = tdTexto.html().replace(/<br\s*\/?>/gi, ' ').replace(/<\/?[^>]+>/g, '').trim();
+
+        const correoMatch = textoCompleto.match(/Contacto:\s*([\w.-]+@[\w.-]+\.\w+)/i);
+        const correo = correoMatch ? correoMatch[1] : '';
+        const campusMatch = textoCompleto.match(/Campus:\s*([^ ]+)/i);
+        const campus = campusMatch ? campusMatch[1] : '';
+        const cvlacUrl = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
+
+        const imgSrc = tdImg.find('img').attr('src') || '';
+        const imagen = imgSrc
+          ? (imgSrc.startsWith('http') ? imgSrc : `https://www.unipamplona.edu.co${imgSrc}`)
+          : '';
+
+        if (nombre) {
+          result.push({
+            nombre,
+            resolucion: textoCompleto.split(',')[0] || '',
+            cargo: categoria.includes('Ocasional') ? 'Ocasional o Cátedra' : 'Tiempo Completo',
+            correo,
+            campus,
+            cvlac: cvlacUrl,
+            imagen
+          });
+        }
+      });
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Error al obtener profesores:', err);
+    res.status(500).json({ error: 'No se pudo obtener la lista de profesores.' });
+  }
+});
 
 
 
