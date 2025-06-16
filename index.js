@@ -230,123 +230,100 @@ if (!fs.existsSync(dir)) {
   }
 });
 
+const URL3 = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_villa.jsp';
+
 app.get('/profesores', async (req, res) => {
   try {
-    const URL = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_villa.jsp';
-    const { data } = await axios.get(URL);
+    const { data } = await axios.get(URL3);
     const $ = cheerio.load(data);
+    const profesores = [];
 
-    const categorias = [
-      { 
-        texto: 'Docentes Tiempo Completo', 
-        puesto: 'Tiempo Completo',
-        tipo: 'completo' 
-      },
-      { 
-        texto: 'Docentes Tiempo Completo Ocasional y Cátedra', 
-        puesto: 'Ocasional o Cátedra',
-        tipo: 'ocasional' 
-      },
-      { 
-        texto: 'Profesores Hora Cátedra', 
-        puesto: 'Hora Cátedra',
-        tipo: 'catedra' 
-      }
+    const encabezados = [
+      { texto: 'Docentes Tiempo Completo', puesto: 'Tiempo Completo' },
+      { texto: 'Docentes Tiempo Completo Ocasional', puesto: 'Ocasional'}
+      { texto: 'Profesores Hora Cátedra', puesto: 'Cátedra'}
     ];
 
-    const result = [];
-
-    for (const categoria of categorias) {
-      const header = $('h1').filter((i, el) =>
-        $(el).text().trim() === categoria.texto
+    for (const encabezado of encabezados) {
+      const h1 = $('h1').filter((i, el) =>
+        $(el).text().toLowerCase().includes(encabezado.texto.toLowerCase())
       ).first();
 
-      if (!header.length) {
-        console.warn(`⚠️ No se encontró el encabezado: ${categoria.texto}`);
+      if (!h1.length) {
+        console.warn(`⚠️ No se encontró el <h1> con "${encabezado.texto}"`);
         continue;
       }
 
-      let tabla = header.next('table');
+      let tabla = h1.nextAll('div').find('table').first();
       if (!tabla.length) {
-        tabla = header.nextAll('table').first();
+        tabla = h1.nextAll().filter((i, el) => $(el).is('table')).first();
       }
 
       if (!tabla.length) {
-        console.warn(`⚠️ No se encontró tabla para: ${categoria.texto}`);
+        console.warn(`⚠️ No se encontró la tabla después del <h1> "${encabezado.texto}"`);
         continue;
       }
 
       const filas = tabla.find('tr');
+      filas.each((fIndex, fila) => {
+        const tds = $(fila).find('td');
+        if (tds.length !== 2 && tds.length !== 4) return;
 
-      filas.each((_, fila) => {
-        const celdas = $(fila).find('td');
-        if (celdas.length < 2) return;
+        for (let i = 0; i < tds.length; i += 2) {
+          const tdTexto = $(tds[i]);
+          const tdImagen = $(tds[i + 1]);
 
-        // Handle both single professor per row and two professors per row cases
-        for (let i = 0; i < celdas.length; i += 2) {
-          const tdTexto = $(celdas[i]);
-          const tdImg = $(celdas[i + 1]);
-
-          const nombre = tdTexto.find('strong').first().text().trim().replace(/\s+/g, ' ');
+          const nombre = tdTexto.find('strong').first().text().trim();
           const textoCompleto = tdTexto.text().replace(/\s+/g, ' ').trim();
 
-          // Check for "Hoja de Vida" link
-          const hasHojaVida = tdTexto.find('a[href*="hoja_vida"], a[title*="hoja_de_vida"]').length > 0;
+          const resolucion = textoCompleto.match(/Resolución\s*([^<\n]+)/i)?.[1]?.trim() || '';
+          const cargoExtraido = textoCompleto.match(/Profesor[a]? [^<\n]+/i)?.[0]?.trim();
+          const cargo = cargoExtraido || encabezado.puesto;
+          const correo = textoCompleto.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
+          const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
+          const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
 
-          // Extract information
-          const resolucionMatch = textoCompleto.match(/Resolu(?:ci|)ón\s*([^<\n]+)/i);
-          const resolucion = resolucionMatch ? resolucionMatch[0].trim() : '';
+          const imgTag = tdImagen.find('img');
+          let imagen = '';
+          const imgSrc = imgTag.length ? imgTag.attr('src') : '';
 
-          const cargoMatch = textoCompleto.match(/Profesor[oa] (?:Titular|Asociado|Asistente).+?(?=Registro|Contacto|$)/i);
-          const cargo = cargoMatch ? cargoMatch[0].trim() : categoria.puesto;
+          if (imgSrc.startsWith('data:image')) {
+            // Si es base64, convertir y guardar
+            const matches = imgSrc.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (matches) {
+              const ext = matches[1].split('/')[1]; // "png" o "jpeg"
+              const base64Data = matches[2];
+              const fileName = `${uuidv4()}.${ext}`;
+              const filePath = path.join(__dirname, 'public/profesores', fileName);
 
-          const correoMatch = textoCompleto.match(/Contacto:\s*([^\s]+@[^\s]+)/i);
-          let correo = correoMatch ? correoMatch[1] : '';
-          // Append "Campus:" to email if not already present
-          if (correo && !correo.includes('Campus:')) {
-            correo = correo + 'Campus:';
+              const dir = path.join(__dirname, 'public/profesores');
+if (!fs.existsSync(dir)) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+
+              fs.writeFileSync(filePath, base64Data, 'base64');
+              imagen = `${req.protocol}://${req.get('host')}/imagenes/${fileName}`;
+            }
+          } else if (imgSrc) {
+            imagen = imgSrc.startsWith('http')
+              ? imgSrc
+              : `${URL2.split('/unipamplona')[0]}${imgSrc}`;
           }
-
-          const campusMatch = textoCompleto.match(/Campus:\s*([^\n]+)/i);
-          let campus = campusMatch ? campusMatch[1].trim() : '';
-          // Append "Hoja de Vida" if the link exists
-          if (hasHojaVida && !campus.includes('Hoja de Vida')) {
-            campus += ' Hoja de Vida';
-          }
-
-          const cvlacUrl = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
-
-          const imgSrc = tdImg.find('img').attr('src') || '';
-          const imagen = imgSrc
-            ? (imgSrc.startsWith('http') ? imgSrc : `https://www.unipamplona.edu.co${imgSrc}`)
-            : '';
 
           if (nombre) {
-            result.push({
-              nombre,
-              resolucion,
-              cargo,
-              correo,
-              campus,
-              cvlac: cvlacUrl,
-              imagen,
-              tipo: categoria.tipo
-            });
+            profesores.push({ nombre, resolucion, cargo, correo, campus, cvlac, imagen });
           }
         }
       });
     }
 
-    // If you want to filter by type in the response
-    // const filteredResult = result.filter(prof => prof.tipo === 'ocasional');
-    // res.json(filteredResult);
-
-    res.json(result);
-  } catch (err) {
-    console.error('❌ Error al obtener profesores:', err);
-    res.status(500).json({ error: 'No se pudo obtener la lista de profesores.' });
+    res.json(profesores);
+  } catch (error) {
+    console.error('❌ Error al obtener los profesores:', error);
+    res.status(500).json({ error: 'Error al obtener los profesores' });
   }
 });
+
 
 
 
