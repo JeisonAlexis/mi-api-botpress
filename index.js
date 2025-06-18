@@ -620,6 +620,45 @@ app.get('/rector', async (req, res) => {
 });
 
 
+const URL_ESCUDO = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/identidad.jsp';
+
+app.get('/escudo', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL_ESCUDO);
+    const $ = cheerio.load(data);
+
+    // Buscar el <h4> que contiene la palabra "Escudo"
+    const h4 = $('h4').filter((i, el) =>
+      $(el).text().toLowerCase().includes('escudo')
+    ).first();
+
+    if (!h4.length) {
+      return res.status(404).json({ error: 'No se encontró el título Escudo' });
+    }
+
+    // Buscar la imagen más cercana (puede estar en un <p>, <div> o después del <h4>)
+    let imgTag = h4.nextAll('img').first();
+
+    if (!imgTag.length) {
+      imgTag = h4.parent().find('img').first();
+    }
+
+    if (!imgTag.length) {
+      return res.status(404).json({ error: 'No se encontró la imagen del escudo' });
+    }
+
+    const imgSrc = imgTag.attr('src');
+    const imagen = imgSrc.startsWith('http')
+      ? imgSrc
+      : `${URL_ESCUDO.split('/unipamplona')[0]}${imgSrc}`;
+
+    res.json({ imagen });
+  } catch (error) {
+    console.error('❌ Error al obtener el escudo:', error);
+    res.status(500).json({ error: 'Error al obtener el escudo' });
+  }
+});
+
 
 
 
