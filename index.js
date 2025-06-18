@@ -659,7 +659,35 @@ app.get('/escudo', async (req, res) => {
   }
 });
 
+const URL_INCAPACIDADES = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_21/recursos/01_general/17082010/incapacidades.jsp'; 
 
+app.get('/tramite-incapacidades', async (req, res) => {
+  try {
+    const { data } = await axios.get(URL_INCAPACIDADES);
+    const $ = cheerio.load(data);
+
+    const h1 = $('#pagcontenido h1').filter((i, el) =>
+      $(el).text().toLowerCase().includes('trámite de incapacidades')
+    ).first();
+
+    if (!h1.length) {
+      return res.status(404).json({ error: 'No se encontró la sección de Trámite de incapacidades.' });
+    }
+
+    const contenido = [];
+    $('#texto p').each((i, el) => {
+      const texto = $(el).text().trim();
+      if (texto) contenido.push(texto);
+    });
+
+    const resultado = contenido.join('\n\n');
+
+    res.json({ titulo: h1.text().trim(), contenido: resultado });
+  } catch (error) {
+    console.error('❌ Error al obtener el trámite de incapacidades:', error);
+    res.status(500).json({ error: 'No se pudo obtener el contenido del trámite de incapacidades.' });
+  }
+});
 
 
 app.listen(port, () => {
