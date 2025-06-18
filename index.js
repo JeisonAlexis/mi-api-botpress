@@ -280,7 +280,10 @@ app.get('/profesores', async (req, res) => {
           const cargoExtraido = textoCompleto.match(/Profesor[a]? [^<\n]+/i)?.[0]?.trim();
           const cargo = cargoExtraido || encabezado.puesto;
           const correo = textoCompleto.match(/[\w.-]+@[\w.-]+\.\w+/i)?.[0] || '';
-          const campus = textoCompleto.match(/Campus:\s*([\w\s]+)/i)?.[1]?.trim() || '';
+          const campusMatch = textoCompleto.match(/Campus:\s*([^\n]+)/i);
+          let campus = campusMatch?.[1]?.trim() || '';
+          campus = campus.replace(/Hoja de vida.*$/i, '').trim();
+          
           const cvlac = tdTexto.find('a[href*="cvlac"]').attr('href') || '';
 
           const imgTag = tdImagen.find('img');
