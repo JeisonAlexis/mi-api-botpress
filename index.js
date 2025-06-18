@@ -620,7 +620,7 @@ app.get('/rector', async (req, res) => {
 });
 
 
-const URL_ESCUDO = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/identidad.jsp';
+const URL_ESCUDO = 'https://www.unipamplona.edu.co/unipamplona/portalIG/home_1/recursos/corporativo/15022011/descargas_unipamplona.jsp';
 
 app.get('/escudo', async (req, res) => {
   try {
