@@ -951,6 +951,34 @@ app.get('/tipo-formacion-sena', async (req, res) => {
   }
 });
 
+app.get('/faq/sena/costo-inscripcion', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    const pregunta = $(".titulopregunta:contains('¿Qué costo tiene la inscripción y la formación en el SENA?')");
+    const respuesta = pregunta.next(".respuesta");
+
+    const resultado = {
+      pregunta: pregunta.text().trim(),
+      respuesta: respuesta.text().trim()
+    };
+
+    res.json(resultado);
+  } catch (error) {
+    console.error('Error al obtener la pregunta del SENA:', error.message);
+    res.status(500).json({ error: 'Error al obtener la información' });
+  }
+});
+
 
 
 app.listen(port, () => {
