@@ -891,7 +891,7 @@ app.get('/quien-puede-inscribirse', async (req, res) => {
       if (titulo.toLowerCase().includes('quién puede inscribirse')) {
         pregunta = titulo;
         respuesta = cuerpo;
-        return false; // salir del loop
+        return false; 
       }
     });
 
@@ -908,6 +908,49 @@ app.get('/quien-puede-inscribirse', async (req, res) => {
     });
   }
 });
+
+app.get('/tipo-formacion-sena', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    const preguntas = $('.preg');
+    let pregunta = '';
+    let respuesta = '';
+
+    preguntas.each((i, el) => {
+      const titulo = $(el).find('.titulopregunta').text().trim();
+      const cuerpo = $(el).find('.respuesta').html().trim();
+
+      if (titulo.includes('¿Qué tipo de formación ofrece el SENA?')) {
+        pregunta = titulo;
+
+        // Limpieza del HTML conservando formato básico
+        const textoPlano = cheerio.load(`<div>${cuerpo}</div>`)('div').text().replace(/\s+\n/g, '\n').trim();
+        respuesta = textoPlano;
+        return false;
+      }
+    });
+
+    if (!pregunta || !respuesta) {
+      throw new Error('No se encontró la pregunta sobre el tipo de formación.');
+    }
+
+    res.json({ pregunta, respuesta });
+  } catch (error) {
+    console.error('❌ Error scraping:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la información sobre el tipo de formación.' });
+  }
+});
+
 
 
 app.listen(port, () => {
