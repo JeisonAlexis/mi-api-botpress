@@ -689,6 +689,7 @@ app.get('/tramite-incapacidades', async (req, res) => {
 
 app.get('/recuperar-cuenta-sofia', async (req, res) => {
   try {
+    console.time("scraping");
     const { data: html } = await axios.get('https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes');
     const $ = cheerio.load(html);
 
@@ -703,7 +704,7 @@ app.get('/recuperar-cuenta-sofia', async (req, res) => {
       if (titulo.toLowerCase().includes('contraseña')) {
         pregunta = titulo;
         respuesta = cuerpo;
-        return false; // Detener el loop
+        return false; 
       }
     });
 
@@ -712,6 +713,7 @@ app.get('/recuperar-cuenta-sofia', async (req, res) => {
     }
 
     res.json({ pregunta, respuesta });
+    console.timeEnd("scraping");
 
   } catch (error) {
     console.error('❌ Error scraping:', error.message);
