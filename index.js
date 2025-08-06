@@ -951,7 +951,7 @@ app.get('/tipo-formacion-sena', async (req, res) => {
   }
 });
 
-app.get('/faq/sena/costo-inscripcion', async (req, res) => {
+app.get('/costo-inscripcion', async (req, res) => {
   try {
     const { data: html } = await axios.get(
       'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
