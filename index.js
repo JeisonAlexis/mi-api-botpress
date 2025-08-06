@@ -687,6 +687,38 @@ app.get('/tramite-incapacidades', async (req, res) => {
   }
 });
 
+app.get('/recuperar-cuenta-sofia', async (req, res) => {
+  try {
+    const { data: html } = await axios.get('https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes');
+    const $ = cheerio.load(html);
+
+    const preguntas = $('.preg');
+    let pregunta = '';
+    let respuesta = '';
+
+    preguntas.each((i, el) => {
+      const titulo = $(el).find('.titulopregunta').text().trim();
+      const cuerpo = $(el).find('.respuesta').text().trim();
+
+      if (titulo.toLowerCase().includes('contraseña')) {
+        pregunta = titulo;
+        respuesta = cuerpo;
+        return false; // Detener el loop
+      }
+    });
+
+    if (!pregunta || !respuesta) {
+      throw new Error('No se encontró la pregunta sobre la contraseña.');
+    }
+
+    res.json({ pregunta, respuesta });
+
+  } catch (error) {
+    console.error('❌ Error scraping:', error.message);
+    res.status(500).json({ error: 'No se pudo obtener la pregunta sobre la contraseña en SOFIA Plus' });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
