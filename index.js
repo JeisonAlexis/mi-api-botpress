@@ -979,6 +979,39 @@ app.get('/costo-inscripcion', async (req, res) => {
   }
 });
 
+app.get('/horarios-sena', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)',
+        },
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    // Buscar por el título exacto
+    const pregunta = $('div.titulopregunta')
+      .filter((i, el) => $(el).text().includes('¿En qué horarios se ofrecen los programas de formación?'))
+      .first();
+
+    const respuesta = pregunta.next('.respuesta').html();
+
+    if (!respuesta) {
+      return res.status(404).json({ error: 'Contenido no encontrado' });
+    }
+
+    res.json({
+      pregunta: pregunta.text().trim(),
+      respuesta: respuesta.trim(),
+    });
+  } catch (error) {
+    console.error('Error al obtener los datos:', error.message);
+    res.status(500).json({ error: 'Error al obtener los datos' });
+  }
+});
 
 
 app.listen(port, () => {
