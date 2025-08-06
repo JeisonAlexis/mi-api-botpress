@@ -868,6 +868,48 @@ app.get("/recuperar-cuenta-sofia", async (req, res) => {
   }
 });
 
+app.get('/quien-puede-inscribirse', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    let pregunta = '';
+    let respuesta = '';
+
+    $('.preg').each((i, el) => {
+      const titulo = $(el).find('.titulopregunta').text().trim();
+      const cuerpo = $(el).find('.respuesta').text().trim();
+
+      if (titulo.toLowerCase().includes('quién puede inscribirse')) {
+        pregunta = titulo;
+        respuesta = cuerpo;
+        return false; // salir del loop
+      }
+    });
+
+    if (!pregunta || !respuesta) {
+      throw new Error('No se encontró la pregunta sobre inscripciones.');
+    }
+
+    res.json({ pregunta, respuesta });
+
+  } catch (error) {
+    console.error('❌ Error scraping:', error.message);
+    res.status(500).json({
+      error: 'No se pudo obtener la información sobre quién puede inscribirse.'
+    });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
