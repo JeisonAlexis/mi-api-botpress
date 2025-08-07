@@ -1075,19 +1075,19 @@ app.get("/programas-virtual-sena", async (req, res) => {
     $(".programas__card").each((i, elem) => {
       const titulo = $(elem).find(".programas__desplegable p").text().trim();
 
-      // Encontrar todos los <a> y buscar el que tenga un PDF y uno que tenga YouTube
       const links = $(elem).find("a");
-
       let pdf = null;
       let video = null;
 
       links.each((i, link) => {
         const href = $(link).attr("href");
-        if (href?.endsWith(".pdf")) {
-          pdf = new URL(href.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/")
-            .href;
+        if (!href) return;
+
+        if (href.endsWith(".pdf")) {
+          pdf = new URL(href.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/").href;
         }
-        if (href?.includes("youtube.com")) {
+
+        if (href.includes("youtube.com") || href.includes("youtu.be")) {
           video = href;
         }
       });
@@ -1104,11 +1104,6 @@ app.get("/programas-virtual-sena", async (req, res) => {
     res.json({ tecnologos, tecnicos });
   } catch (error) {
     console.error("Error al obtener los programas:", error.message);
-    console.error(
-      "Detalles:",
-      error.response?.status,
-      error.response?.statusText
-    );
     res.status(500).json({
       error: "Error al obtener los programas",
       message: error.message,
