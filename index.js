@@ -1075,23 +1075,29 @@ app.get("/programas-virtual-sena", async (req, res) => {
     $(".programas__card").each((i, elem) => {
       const titulo = $(elem).find(".programas__desplegable p").text().trim();
 
-      let pdf = $(elem).find('a[href$=".pdf"]').attr("href") || null;
-      let video = $(elem).find('a[href*="youtube.com"]').attr("href") || null;
+      // Encontrar todos los <a> y buscar el que tenga un PDF y uno que tenga YouTube
+      const links = $(elem).find("a");
 
-      // Arreglar la URL del PDF
-      pdf = pdf
-        ? new URL(pdf.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/").href
-        : null;
+      let pdf = null;
+      let video = null;
+
+      links.each((i, link) => {
+        const href = $(link).attr("href");
+        if (href?.endsWith(".pdf")) {
+          pdf = new URL(href.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/")
+            .href;
+        }
+        if (href?.includes("youtube.com")) {
+          video = href;
+        }
+      });
 
       const programa = { titulo, pdf, video };
 
-      // Clasificar según la ruta del PDF
       if (pdf && pdf.includes("/tecgnologias/")) {
         tecnologos.push(programa);
       } else if (pdf && pdf.includes("/tecnico/")) {
         tecnicos.push(programa);
-      } else {
-        // Si no se puede clasificar, puedes ignorar o guardar en otro array
       }
     });
 
