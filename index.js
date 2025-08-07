@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const https = require("https");
 
 const app = express();
 //const port = 3000;
@@ -1056,9 +1057,13 @@ app.get("/convocatoria", async (req, res) => {
 
 app.get("/programas-tecnologos", async (req, res) => {
   try {
+    // Agente HTTPS que ignora problemas de certificado
+    const agent = new https.Agent({ rejectUnauthorized: false });
+
     const { data: html } = await axios.get(
       "https://zajuna.sena.edu.co/titulada.php",
       {
+        httpsAgent: agent,
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
         },
@@ -1077,9 +1082,7 @@ app.get("/programas-tecnologos", async (req, res) => {
 
       programas.push({
         titulo,
-        pdf: pdf
-          ? new URL(pdf, "https://portal.senasofiaplus.edu.co/").href
-          : null,
+        pdf: pdf ? new URL(pdf, "https://zajuna.sena.edu.co/").href : null,
         video,
       });
     });
@@ -1092,12 +1095,10 @@ app.get("/programas-tecnologos", async (req, res) => {
       error.response?.status,
       error.response?.statusText
     );
-    res
-      .status(500)
-      .json({
-        error: "Error al obtener los programas",
-        message: error.message,
-      });
+    res.status(500).json({
+      error: "Error al obtener los programas",
+      message: error.message,
+    });
   }
 });
 
