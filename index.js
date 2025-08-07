@@ -1049,6 +1049,49 @@ app.get('/convocatoria', async (req, res) => {
   }
 });
 
+app.get('/programas-tecnologos', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+    const programas = [];
+
+    $('.programas__card').each((i, elem) => {
+      const titulo = $(elem)
+        .find('.programas__desplegable p')
+        .text()
+        .trim();
+
+      const pdf = $(elem)
+        .find('a[href$=".pdf"]')
+        .attr('href') || null;
+
+      const video = $(elem)
+        .find('a[href*="youtube.com"]')
+        .attr('href') || null;
+
+      programas.push({
+        titulo,
+        pdf: pdf ? new URL(pdf, 'https://portal.senasofiaplus.edu.co/').href : null,
+        video
+      });
+    });
+
+    res.json({ programas });
+  } catch (error) {
+    console.error('Error al obtener los programas:', error.message);
+    res.status(500).json({ error: 'Error al obtener los programas' });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
