@@ -1111,6 +1111,45 @@ app.get("/programas-virtual-sena", async (req, res) => {
   }
 });
 
+app.get('/faq/ofertas-ciudad', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    let resultado = null;
+
+    $('.titulopregunta').each((_, element) => {
+      const pregunta = $(element).text().trim();
+      
+      if (pregunta.includes('¿Cómo consultar el número de ofertas disponibles en su ciudad?')) {
+        const respuesta = $(element).next('.respuesta').text().trim();
+
+        resultado = {
+          pregunta,
+          respuesta
+        };
+      }
+    });
+
+    if (resultado) {
+      res.json(resultado);
+    } else {
+      res.status(404).json({ error: 'Pregunta no encontrada' });
+    }
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error al consultar la página del SENA', detalles: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
