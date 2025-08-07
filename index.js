@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
   res.send("¡Hola desde mi servicio de Render!");
 });
 
-const URL = "https://www.unipamplona.edu.co";
+//const URL = "https://www.unipamplona.edu.co";
 
 const URL1 =
   "https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/22072013/01_elprograma.jsp";
