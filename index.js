@@ -1150,6 +1150,35 @@ app.get('/ofertas-ciudad', async (req, res) => {
   }
 });
 
+app.get('/horario-modalidad-combinada', async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+    const titulo = $('div.titulopregunta:contains("¿En qué consiste el horario en modalidad combinada?")');
+    const respuesta = titulo.next('.respuesta').html();
+
+    if (respuesta) {
+      res.json({
+        pregunta: titulo.text().trim(),
+        respuesta: respuesta.trim()
+      });
+    } else {
+      res.status(404).json({ error: 'Pregunta no encontrada en la página.' });
+    }
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los datos del SENA.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
