@@ -1054,7 +1054,7 @@ app.get("/convocatoria", async (req, res) => {
   }
 });
 
-app.get("/programas-sena", async (req, res) => {
+app.get("/programas-virtual-sena", async (req, res) => {
   try {
     const agent = new https.Agent({ rejectUnauthorized: false });
 
