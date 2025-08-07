@@ -944,11 +944,9 @@ app.get("/tipo-formacion-sena", async (req, res) => {
     res.json({ pregunta, respuesta });
   } catch (error) {
     console.error("❌ Error scraping:", error.message);
-    res
-      .status(500)
-      .json({
-        error: "No se pudo obtener la información sobre el tipo de formación.",
-      });
+    res.status(500).json({
+      error: "No se pudo obtener la información sobre el tipo de formación.",
+    });
   }
 });
 
@@ -1056,9 +1054,8 @@ app.get("/convocatoria", async (req, res) => {
   }
 });
 
-app.get("/programas-tecnologos", async (req, res) => {
+app.get("/programas-sena", async (req, res) => {
   try {
-    // Agente HTTPS que ignora problemas de certificado
     const agent = new https.Agent({ rejectUnauthorized: false });
 
     const { data: html } = await axios.get(
@@ -1072,23 +1069,33 @@ app.get("/programas-tecnologos", async (req, res) => {
     );
 
     const $ = cheerio.load(html);
-    const programas = [];
+    const tecnologos = [];
+    const tecnicos = [];
 
     $(".programas__card").each((i, elem) => {
       const titulo = $(elem).find(".programas__desplegable p").text().trim();
 
-      const pdf = $(elem).find('a[href$=".pdf"]').attr("href") || null;
+      let pdf = $(elem).find('a[href$=".pdf"]').attr("href") || null;
+      let video = $(elem).find('a[href*="youtube.com"]').attr("href") || null;
 
-      const video = $(elem).find('a[href*="youtube.com"]').attr("href") || null;
+      // Arreglar la URL del PDF
+      pdf = pdf
+        ? new URL(pdf.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/").href
+        : null;
 
-      programas.push({
-        titulo,
-        pdf: pdf ? new URL(pdf, "https://zajuna.sena.edu.co/").href : null,
-        video,
-      });
+      const programa = { titulo, pdf, video };
+
+      // Clasificar según la ruta del PDF
+      if (pdf && pdf.includes("/tecgnologias/")) {
+        tecnologos.push(programa);
+      } else if (pdf && pdf.includes("/tecnico/")) {
+        tecnicos.push(programa);
+      } else {
+        // Si no se puede clasificar, puedes ignorar o guardar en otro array
+      }
     });
 
-    res.json({ programas });
+    res.json({ tecnologos, tecnicos });
   } catch (error) {
     console.error("Error al obtener los programas:", error.message);
     console.error(
