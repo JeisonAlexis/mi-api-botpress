@@ -1013,7 +1013,7 @@ app.get('/horarios-sena', async (req, res) => {
   }
 });
 
-app.get('/capturar-pregunta', async (req, res) => {
+app.get('/convocatoria', async (req, res) => {
   try {
     const { data: html } = await axios.get(
       'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
