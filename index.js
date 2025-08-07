@@ -1052,7 +1052,7 @@ app.get('/convocatoria', async (req, res) => {
 app.get('/programas-tecnologos', async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      'https://zajuna.sena.edu.co/titulada.php',
       {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
