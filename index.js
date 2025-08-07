@@ -537,11 +537,9 @@ app.get("/info-up", async (req, res) => {
       "❌ Error al obtener las preguntas frecuentes: ",
       error.message
     );
-    res
-      .status(500)
-      .json({
-        error: "No se pudo obtener la información de preguntas frecuentes.",
-      });
+    res.status(500).json({
+      error: "No se pudo obtener la información de preguntas frecuentes.",
+    });
   }
 });
 
@@ -590,11 +588,9 @@ app.get("/sedes-regionales", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error al obtener sedes regionales:", error.message);
-    res
-      .status(500)
-      .json({
-        error: "No se pudo extraer la información de sedes regionales.",
-      });
+    res.status(500).json({
+      error: "No se pudo extraer la información de sedes regionales.",
+    });
   }
 });
 
@@ -801,11 +797,9 @@ app.get("/tramite-incapacidades", async (req, res) => {
       .first();
 
     if (!h1.length) {
-      return res
-        .status(404)
-        .json({
-          error: "No se encontró la sección de Trámite de incapacidades.",
-        });
+      return res.status(404).json({
+        error: "No se encontró la sección de Trámite de incapacidades.",
+      });
     }
 
     const contenido = [];
@@ -819,11 +813,9 @@ app.get("/tramite-incapacidades", async (req, res) => {
     res.json({ titulo: h1.text().trim(), contenido: resultado });
   } catch (error) {
     console.error("❌ Error al obtener el trámite de incapacidades:", error);
-    res
-      .status(500)
-      .json({
-        error: "No se pudo obtener el contenido del trámite de incapacidades.",
-      });
+    res.status(500).json({
+      error: "No se pudo obtener el contenido del trámite de incapacidades.",
+    });
   }
 });
 
@@ -868,124 +860,133 @@ app.get("/recuperar-cuenta-sofia", async (req, res) => {
   }
 });
 
-app.get('/quien-puede-inscribirse', async (req, res) => {
+app.get("/quien-puede-inscribirse", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
 
-    let pregunta = '';
-    let respuesta = '';
+    let pregunta = "";
+    let respuesta = "";
 
-    $('.preg').each((i, el) => {
-      const titulo = $(el).find('.titulopregunta').text().trim();
-      const cuerpo = $(el).find('.respuesta').text().trim();
+    $(".preg").each((i, el) => {
+      const titulo = $(el).find(".titulopregunta").text().trim();
+      const cuerpo = $(el).find(".respuesta").text().trim();
 
-      if (titulo.toLowerCase().includes('quién puede inscribirse')) {
+      if (titulo.toLowerCase().includes("quién puede inscribirse")) {
         pregunta = titulo;
         respuesta = cuerpo;
-        return false; 
+        return false;
       }
     });
 
     if (!pregunta || !respuesta) {
-      throw new Error('No se encontró la pregunta sobre inscripciones.');
+      throw new Error("No se encontró la pregunta sobre inscripciones.");
     }
 
     res.json({ pregunta, respuesta });
-
   } catch (error) {
-    console.error('❌ Error scraping:', error.message);
+    console.error("❌ Error scraping:", error.message);
     res.status(500).json({
-      error: 'No se pudo obtener la información sobre quién puede inscribirse.'
+      error: "No se pudo obtener la información sobre quién puede inscribirse.",
     });
   }
 });
 
-app.get('/tipo-formacion-sena', async (req, res) => {
+app.get("/tipo-formacion-sena", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
 
-    const preguntas = $('.preg');
-    let pregunta = '';
-    let respuesta = '';
+    const preguntas = $(".preg");
+    let pregunta = "";
+    let respuesta = "";
 
     preguntas.each((i, el) => {
-      const titulo = $(el).find('.titulopregunta').text().trim();
-      const cuerpo = $(el).find('.respuesta').html().trim();
+      const titulo = $(el).find(".titulopregunta").text().trim();
+      const cuerpo = $(el).find(".respuesta").html().trim();
 
-      if (titulo.includes('¿Qué tipo de formación ofrece el SENA?')) {
+      if (titulo.includes("¿Qué tipo de formación ofrece el SENA?")) {
         pregunta = titulo;
 
         // Limpieza del HTML conservando formato básico
-        const textoPlano = cheerio.load(`<div>${cuerpo}</div>`)('div').text().replace(/\s+\n/g, '\n').trim();
+        const textoPlano = cheerio
+          .load(`<div>${cuerpo}</div>`)("div")
+          .text()
+          .replace(/\s+\n/g, "\n")
+          .trim();
         respuesta = textoPlano;
         return false;
       }
     });
 
     if (!pregunta || !respuesta) {
-      throw new Error('No se encontró la pregunta sobre el tipo de formación.');
+      throw new Error("No se encontró la pregunta sobre el tipo de formación.");
     }
 
     res.json({ pregunta, respuesta });
   } catch (error) {
-    console.error('❌ Error scraping:', error.message);
-    res.status(500).json({ error: 'No se pudo obtener la información sobre el tipo de formación.' });
+    console.error("❌ Error scraping:", error.message);
+    res
+      .status(500)
+      .json({
+        error: "No se pudo obtener la información sobre el tipo de formación.",
+      });
   }
 });
 
-app.get('/costo-inscripcion', async (req, res) => {
+app.get("/costo-inscripcion", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
 
-    const pregunta = $(".titulopregunta:contains('¿Qué costo tiene la inscripción y la formación en el SENA?')");
+    const pregunta = $(
+      ".titulopregunta:contains('¿Qué costo tiene la inscripción y la formación en el SENA?')"
+    );
     const respuesta = pregunta.next(".respuesta");
 
     const resultado = {
       pregunta: pregunta.text().trim(),
-      respuesta: respuesta.text().trim()
+      respuesta: respuesta.text().trim(),
     };
 
     res.json(resultado);
   } catch (error) {
-    console.error('Error al obtener la pregunta del SENA:', error.message);
-    res.status(500).json({ error: 'Error al obtener la información' });
+    console.error("Error al obtener la pregunta del SENA:", error.message);
+    res.status(500).json({ error: "Error al obtener la información" });
   }
 });
 
-app.get('/horarios-sena', async (req, res) => {
+app.get("/horarios-sena", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)',
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
         },
       }
     );
@@ -993,14 +994,18 @@ app.get('/horarios-sena', async (req, res) => {
     const $ = cheerio.load(html);
 
     // Buscar por el título exacto
-    const pregunta = $('div.titulopregunta')
-      .filter((i, el) => $(el).text().includes('¿En qué horarios se ofrecen los programas de formación?'))
+    const pregunta = $("div.titulopregunta")
+      .filter((i, el) =>
+        $(el)
+          .text()
+          .includes("¿En qué horarios se ofrecen los programas de formación?")
+      )
       .first();
 
-    const respuesta = pregunta.next('.respuesta').html();
+    const respuesta = pregunta.next(".respuesta").html();
 
     if (!respuesta) {
-      return res.status(404).json({ error: 'Contenido no encontrado' });
+      return res.status(404).json({ error: "Contenido no encontrado" });
     }
 
     res.json({
@@ -1008,19 +1013,19 @@ app.get('/horarios-sena', async (req, res) => {
       respuesta: respuesta.trim(),
     });
   } catch (error) {
-    console.error('Error al obtener los datos:', error.message);
-    res.status(500).json({ error: 'Error al obtener los datos' });
+    console.error("Error al obtener los datos:", error.message);
+    res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
 
-app.get('/convocatoria', async (req, res) => {
+app.get("/convocatoria", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
@@ -1028,70 +1033,73 @@ app.get('/convocatoria', async (req, res) => {
 
     // Busca todas las preguntas y respuestas
     const faqs = [];
-    $('.titulopregunta').each((i, elem) => {
+    $(".titulopregunta").each((i, elem) => {
       const pregunta = $(elem).text().trim();
-      const respuesta = $(elem).next('.respuesta').text().trim();
+      const respuesta = $(elem).next(".respuesta").text().trim();
 
       // Buscamos la pregunta exacta
-      if (pregunta.includes('¿Cuándo son las próximas convocatorias?')) {
+      if (pregunta.includes("¿Cuándo son las próximas convocatorias?")) {
         faqs.push({ pregunta, respuesta });
       }
     });
 
     if (faqs.length === 0) {
-      return res.status(404).json({ error: 'Pregunta no encontrada.' });
+      return res.status(404).json({ error: "Pregunta no encontrada." });
     }
 
     res.json(faqs[0]); // Solo devuelvo la primera coincidencia
   } catch (error) {
-    console.error('Error al obtener la página:', error.message);
-    res.status(500).json({ error: 'Error al capturar los datos.' });
+    console.error("Error al obtener la página:", error.message);
+    res.status(500).json({ error: "Error al capturar los datos." });
   }
 });
 
-app.get('/programas-tecnologos', async (req, res) => {
+app.get("/programas-tecnologos", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://zajuna.sena.edu.co/titulada.php',
+      "https://zajuna.sena.edu.co/titulada.php",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
     const programas = [];
 
-    $('.programas__card').each((i, elem) => {
-      const titulo = $(elem)
-        .find('.programas__desplegable p')
-        .text()
-        .trim();
+    $(".programas__card").each((i, elem) => {
+      const titulo = $(elem).find(".programas__desplegable p").text().trim();
 
-      const pdf = $(elem)
-        .find('a[href$=".pdf"]')
-        .attr('href') || null;
+      const pdf = $(elem).find('a[href$=".pdf"]').attr("href") || null;
 
-      const video = $(elem)
-        .find('a[href*="youtube.com"]')
-        .attr('href') || null;
+      const video = $(elem).find('a[href*="youtube.com"]').attr("href") || null;
 
       programas.push({
         titulo,
-        pdf: pdf ? new URL(pdf, 'https://portal.senasofiaplus.edu.co/').href : null,
-        video
+        pdf: pdf
+          ? new URL(pdf, "https://portal.senasofiaplus.edu.co/").href
+          : null,
+        video,
       });
     });
 
     res.json({ programas });
   } catch (error) {
-    console.error('Error al obtener los programas:', error.message);
-    res.status(500).json({ error: 'Error al obtener los programas' });
+    console.error("Error al obtener los programas:", error.message);
+    console.error(
+      "Detalles:",
+      error.response?.status,
+      error.response?.statusText
+    );
+    res
+      .status(500)
+      .json({
+        error: "Error al obtener los programas",
+        message: error.message,
+      });
   }
 });
-
-
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
