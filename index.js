@@ -1111,7 +1111,7 @@ app.get("/programas-virtual-sena", async (req, res) => {
   }
 });
 
-app.get('/faq/ofertas-ciudad', async (req, res) => {
+app.get('/ofertas-ciudad', async (req, res) => {
   try {
     const { data: html } = await axios.get(
       'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
