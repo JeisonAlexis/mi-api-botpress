@@ -71,7 +71,7 @@ app.get("/director-programa", async (req, res) => {
 
     let director = "";
     let correo = "";
-    let horario = "";
+    let horario = ""; //si
     let imagen = "";
 
     const direccion = $("h3")
