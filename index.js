@@ -6,25 +6,23 @@ const https = require("https");
 const { URL } = require("url");
 
 const app = express();
-//const port = 3000;
 
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// Define una ruta básica (opcional, pero útil para probar)
 app.get("/", (req, res) => {
   res.send("¡Hola desde mi servicio de Render!");
 });
-
-//const URL = "https://www.unipamplona.edu.co";
 
 const URL1 =
   "https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/22072013/01_elprograma.jsp";
 
 const URL2 =
   "https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_pamplona.jsp";
+
+
 
 app.get("/programas-acreditados", async (req, res) => {
   try {
@@ -845,7 +843,7 @@ app.get("/recuperar-cuenta-sofia", async (req, res) => {
       if (titulo.toLowerCase().includes("contraseña")) {
         pregunta = titulo;
         respuesta = cuerpo;
-        return false; // detener .each()
+        return false; 
       }
     });
 
@@ -993,7 +991,7 @@ app.get("/horarios-sena", async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    // Buscar por el título exacto
+    
     const pregunta = $("div.titulopregunta")
       .filter((i, el) =>
         $(el)
@@ -1031,13 +1029,13 @@ app.get("/convocatoria", async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    // Busca todas las preguntas y respuestas
+    
     const faqs = [];
     $(".titulopregunta").each((i, elem) => {
       const pregunta = $(elem).text().trim();
       const respuesta = $(elem).next(".respuesta").text().trim();
 
-      // Buscamos la pregunta exacta
+      
       if (pregunta.includes("¿Cuándo son las próximas convocatorias?")) {
         faqs.push({ pregunta, respuesta });
       }
@@ -1047,7 +1045,7 @@ app.get("/convocatoria", async (req, res) => {
       return res.status(404).json({ error: "Pregunta no encontrada." });
     }
 
-    res.json(faqs[0]); // Solo devuelvo la primera coincidencia
+    res.json(faqs[0]); 
   } catch (error) {
     console.error("Error al obtener la página:", error.message);
     res.status(500).json({ error: "Error al capturar los datos." });
@@ -1150,6 +1148,7 @@ app.get('/ofertas-ciudad', async (req, res) => {
   }
 });
 
+
 app.get('/horario-modalidad-combinada', async (req, res) => {
   try {
     const { data: html } = await axios.get(
@@ -1192,14 +1191,14 @@ app.get('/modalidades-formacion', async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    // Buscar el título exacto
+    
     const titulo = $('div.titulopregunta:contains("¿Qué son las modalidades de formación SENA?")');
 
     if (titulo.length === 0) {
       return res.status(404).json({ error: 'Pregunta no encontrada' });
     }
 
-    // Obtener el contenido de la respuesta
+    
     const respuesta = titulo.next('.respuesta').html();
 
     return res.json({
@@ -1212,6 +1211,42 @@ app.get('/modalidades-formacion', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+import express from 'express';
+import axios from 'axios';
+import cheerio from 'cheerio';
+
+const app = express();
+
+app.get('/directorio', async (req, res) => {
+  try {
+    // 1. Obtener el HTML de la página
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    const directorioHTML = $('.directorio-dependencia').html();
+
+
+    res.send(directorioHTML || 'No se encontró el directorio.');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error al obtener el directorio.');
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Servidor escuchando en http://localhost:3000');
+});
+
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
