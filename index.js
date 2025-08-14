@@ -1214,7 +1214,8 @@ app.get('/modalidades-formacion', async (req, res) => {
 
 
 app.get("/directorio", async (req, res) => {
-  
+  try {
+    const { data } = await axios.get(
       "https://metalmecanicosena.blogspot.com/p/directorio-cmm.html",
       {
         headers: {
