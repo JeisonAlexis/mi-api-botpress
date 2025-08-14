@@ -1226,8 +1226,8 @@ app.get("/directorio", async (req, res) => {
 
     const $ = cheerio.load(data);
 
-    // Aquí usarías selectores reales, pero usaré el HTML que me diste como ejemplo
-    const directorio = [];
+    
+    const directorio = []
 
     $(".directorio-dependencia .directorio-roles li").each((_, el) => {
       const nombre = $(el).find("p").text().trim();
@@ -1249,8 +1249,6 @@ app.get("/directorio", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
-
-
 
 
 app.listen(port, () => {
