@@ -1214,8 +1214,7 @@ app.get('/modalidades-formacion', async (req, res) => {
 
 
 app.get("/directorio", async (req, res) => {
-  try {
-    const { data } = await axios.get(
+  
       "https://metalmecanicosena.blogspot.com/p/directorio-cmm.html",
       {
         headers: {
@@ -1227,7 +1226,7 @@ app.get("/directorio", async (req, res) => {
     const $ = cheerio.load(data);
 
     
-    const directorio = []
+    const directorio = [];
 
     $(".directorio-dependencia .directorio-roles li").each((_, el) => {
       const nombre = $(el).find("p").text().trim();
