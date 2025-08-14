@@ -1213,27 +1213,40 @@ app.get('/modalidades-formacion', async (req, res) => {
 });
 
 
-app.get('/directorio', async (req, res) => {
+app.get("/directorio", async (req, res) => {
   try {
-    
-    const { data: html } = await axios.get(
-      'https://metalmecanicosena.blogspot.com/p/directorio-cmm.html',
+    const { data } = await axios.get(
+      "https://metalmecanicosena.blogspot.com/p/directorio-cmm.html",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
         }
       }
     );
 
-    const $ = cheerio.load(html);
+    const $ = cheerio.load(data);
 
-    const directorioHTML = $('.directorio-dependencia').html();
+    // Aquí usarías selectores reales, pero usaré el HTML que me diste como ejemplo
+    const directorio = [];
 
+    $(".directorio-dependencia .directorio-roles li").each((_, el) => {
+      const nombre = $(el).find("p").text().trim();
+      const cargo = $(el).find("h3").text().trim();
+      const correo = $(el).find("a").attr("href")?.replace("mailto:", "");
+      const imagen = $(el).find("img").attr("src");
 
-    res.send(directorioHTML || 'No se encontró el directorio.');
+      directorio.push({
+        nombre,
+        cargo,
+        correo,
+        imagen
+      });
+    });
+
+    res.json(directorio);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error al obtener el directorio.');
+    res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
 
