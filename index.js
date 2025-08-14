@@ -1212,15 +1212,10 @@ app.get('/modalidades-formacion', async (req, res) => {
   }
 });
 
-import express from 'express';
-import axios from 'axios';
-import cheerio from 'cheerio';
-
-const app = express();
 
 app.get('/directorio', async (req, res) => {
   try {
-    // 1. Obtener el HTML de la página
+    
     const { data: html } = await axios.get(
       'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
       {
@@ -1242,9 +1237,6 @@ app.get('/directorio', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('Servidor escuchando en http://localhost:3000');
-});
 
 
 
