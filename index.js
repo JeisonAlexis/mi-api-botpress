@@ -1253,14 +1253,13 @@ app.get("/directorio", async (req, res) => {
 
 app.get("/regionales", async (req, res) => {
   try {
-    const { data } = await axios.get(
-      "https://www.sena.edu.co/es-co/regionales/Paginas/default.aspx",
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
-        }
+    const urlOrigen = "https://www.sena.edu.co/es-co/regionales/Paginas/default.aspx";
+
+    const { data } = await axios.get(urlOrigen, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
       }
-    );
+    });
 
     const $ = cheerio.load(data);
 
@@ -1271,12 +1270,17 @@ app.get("/regionales", async (req, res) => {
       imagen = `https://www.sena.edu.co${imagen}`;
     }
 
-    res.json({ frase, imagen });
+    res.json({ 
+      frase, 
+      imagen, 
+      fuente: urlOrigen 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener información de regionales" });
   }
 });
+
 
 
 app.listen(port, () => {
