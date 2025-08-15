@@ -1251,40 +1251,34 @@ app.get("/directorio", async (req, res) => {
 });
 
 
-app.get('/captura-sena', async (req, res) => {
+app.get("/regionales", async (req, res) => {
   try {
-    const { data: html } = await axios.get(
-      'https://www.sena.edu.co/es-co/regionales/paginas/default.aspx',
+    const { data } = await axios.get(
+      "https://www.sena.edu.co/es-co/regionales/Paginas/default.aspx",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
         }
       }
     );
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    const $ = cheerio.load(data);
+
+
+    const frase = $(".fraseSite").text().trim();
+
+    let imagen = $(".fraseSite img").attr("src");
+    if (imagen && imagen.startsWith("/")) {
+      imagen = `https://www.sena.edu.co${imagen}`;
+    }
+
+    res.json({
+      frase,
+      imagen
     });
-    const page = await browser.newPage();
-
-    await page.setUserAgent('Mozilla/5.0 (compatible; Botpress/1.0)');
-
-    await page.setContent(html, { waitUntil: 'domcontentloaded' });
-
-    await page.waitForSelector('.fraseSite');
-
-    const element = await page.$('.fraseSite');
-    const screenshotBuffer = await element.screenshot({ type: 'png' });
-
-    await browser.close();
-
-    res.setHeader('Content-Type', 'image/png');
-    res.send(screenshotBuffer);
-
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error al capturar la página');
+    res.status(500).json({ error: "Error al obtener información de regionales" });
   }
 });
 
