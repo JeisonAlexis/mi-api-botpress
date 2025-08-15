@@ -1264,18 +1264,14 @@ app.get("/regionales", async (req, res) => {
 
     const $ = cheerio.load(data);
 
+    const frase = $(".fraseSite").first().text().trim();
 
-    const frase = $(".fraseSite").text().trim();
-
-    let imagen = $(".fraseSite img").attr("src");
+    let imagen = $('img[alt="Regionales sena"]').attr("src");
     if (imagen && imagen.startsWith("/")) {
       imagen = `https://www.sena.edu.co${imagen}`;
     }
 
-    res.json({
-      frase,
-      imagen
-    });
+    res.json({ frase, imagen });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener información de regionales" });
