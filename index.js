@@ -1253,7 +1253,14 @@ app.get("/directorio", async (req, res) => {
 
 app.get('/captura-sena', async (req, res) => {
   try {
-    const url = 'https://www.sena.edu.co/es-co/regionales/paginas/default.aspx'; 
+    const { data: html } = await axios.get(
+      'https://www.sena.edu.co/es-co/regionales/paginas/default.aspx',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
+      }
+    );
 
     const browser = await puppeteer.launch({
       headless: true,
@@ -1263,12 +1270,11 @@ app.get('/captura-sena', async (req, res) => {
 
     await page.setUserAgent('Mozilla/5.0 (compatible; Botpress/1.0)');
 
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
     await page.waitForSelector('.fraseSite');
 
-    const element = await page.$('.fraseSite, img.bordeF');
-
+    const element = await page.$('.fraseSite');
     const screenshotBuffer = await element.screenshot({ type: 'png' });
 
     await browser.close();
