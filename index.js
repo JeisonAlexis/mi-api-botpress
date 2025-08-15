@@ -1251,6 +1251,38 @@ app.get("/directorio", async (req, res) => {
 });
 
 
+app.get('/captura-sena', async (req, res) => {
+  try {
+    const url = 'https://www.sena.edu.co/es-co/regionales/paginas/default.aspx'; 
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+
+    await page.setUserAgent('Mozilla/5.0 (compatible; Botpress/1.0)');
+
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    await page.waitForSelector('.fraseSite');
+
+    const element = await page.$('.fraseSite, img.bordeF');
+
+    const screenshotBuffer = await element.screenshot({ type: 'png' });
+
+    await browser.close();
+
+    res.setHeader('Content-Type', 'image/png');
+    res.send(screenshotBuffer);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error al capturar la página');
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
