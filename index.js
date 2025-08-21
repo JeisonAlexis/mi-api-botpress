@@ -1281,6 +1281,39 @@ app.get("/regionales", async (req, res) => {
   }
 });
 
+app.get("/directorio_contruccion_madera", async (req, res) => {
+  try {
+    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html"; 
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
+      }
+    });
+
+    const $ = cheerio.load(data);
+
+    let directivos = [];
+
+    $(".leader").each((i, el) => {
+      const nombre = $(el).find(".leader-details-name").text().trim();
+      const cargo = $(el).find(".leader-details p").first().text().trim();
+      const correo = $(el).find(".correo a").attr("href")?.replace("mailto:", "") || "";
+      const imagen = $(el).find("img").attr("src") || "";
+
+      directivos.push({
+        nombre,
+        cargo,
+        correo,
+        imagen
+      });
+    });
+
+    res.json(directivos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los directivos" });
+  }
+});
 
 
 app.listen(port, () => {
