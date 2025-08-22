@@ -1350,6 +1350,186 @@ app.get('/prueba_seleccion', async (req, res) => {
   }
 });
 
+app.get('/prueba', async (req, res) => {
+  try {
+    const filePath = path.join(process.cwd(), 'xhr_responses.json'); // ajustar si lo guardas en otra carpeta
+    const raw = await fs.readFile(filePath, 'utf8').catch(() => null);
+
+    if (!raw) {
+      return res.status(500).json({ error: 'Archivo xhr_responses.json no encontrado en el proyecto.' });
+    }
+
+    let responses;
+    try {
+      responses = JSON.parse(raw);
+    } catch (err) {
+      return res.status(500).json({ error: 'xhr_responses.json no contiene JSON válido.' });
+    }
+
+    // Colección donde guardaremos objetos familiares detectados
+    const families = [];
+
+    // Función recursiva que busca objetos con keys característicos
+    function findFamilies(node) {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) {
+        for (const item of node) findFamilies(item);
+        return;
+      }
+      // Si el nodo tiene 'fam_id' y 'programas' -> lo consideramos una familia
+      if (node.fam_id && Array.isArray(node.programas)) {
+        families.push(node);
+        return;
+      }
+      // También puede existir un objeto que tenga 'programas' como clave principal
+      if (Array.isArray(node.programas)) {
+        // crear una familia "anonima" si no tiene fam_id
+        families.push({
+          fam_id: node.fam_id || null,
+          fam_descripcion: node.fam_descripcion || null,
+          fam_url_ruta: node.fam_url_ruta || null,
+          programas: node.programas
+        });
+        return;
+      }
+      // Recorremos claves para buscar más profundo
+      for (const k of Object.keys(node)) {
+        try { findFamilies(node[k]); } catch (e) { /* ignore */ }
+      }
+    }
+
+    // Recorremos cada entrada en xhr_responses.json; las respuestas pueden tener .body o .bodyParsed u otros
+    for (const resp of responses) {
+      // normalizar posible body
+      let body = resp.body ?? resp.bodyParsed ?? resp.data ?? null;
+
+      // Si body es string, intentar parsear JSON
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {
+          // no JSON -> ignorar
+          body = null;
+        }
+      }
+
+      // Si resp itself parece contener la estructura (por ejemplo si file contiene directamente el JSON deseado)
+      if (!body && typeof resp === 'object') {
+        // algunos dumps guardan el objeto directamente
+        findFamilies(resp);
+      }
+
+      if (body) {
+        findFamilies(body);
+      }
+    }
+
+    // Si no encontramos familias, probamos con una heurística: buscar arrays con objetos que tengan 'prog_codigo'
+    if (families.length === 0) {
+      // buscar arrays dentro de responses
+      function findProgramArrays(node) {
+        if (!node || typeof node !== 'object') return null;
+        if (Array.isArray(node)) {
+          if (node.length > 0 && node.some(it => it && typeof it === 'object' && ('prog_codigo' in it || 'prog_nombre' in it))) {
+            // lo consideramos un array de programas
+            return node;
+          }
+          // si es array pero no es programas, buscar dentro de items
+          for (const item of node) {
+            const r = findProgramArrays(item);
+            if (r) return r;
+          }
+          return null;
+        } else {
+          for (const k of Object.keys(node)) {
+            const r = findProgramArrays(node[k]);
+            if (r) return r;
+          }
+        }
+        return null;
+      }
+
+      for (const resp of responses) {
+        let body = resp.body ?? resp.bodyParsed ?? resp.data ?? resp;
+        if (typeof body === 'string') {
+          try { body = JSON.parse(body); } catch (e) { body = null; }
+        }
+        const arr = findProgramArrays(body);
+        if (arr) {
+          // convertir array de programas en una "familia" anonima
+          families.push({ fam_id: null, fam_descripcion: null, fam_url_ruta: null, programas: arr });
+        }
+      }
+    }
+
+    // Aplanar todas las familias a una lista de programas con metadatos de familia incluidos
+    const programas = [];
+    for (const fam of families) {
+      const famMeta = {
+        fam_id: fam.fam_id ?? null,
+        fam_descripcion: fam.fam_descripcion ?? null,
+        fam_url_ruta: fam.fam_url_ruta ?? null
+      };
+      if (Array.isArray(fam.programas)) {
+        for (const p of fam.programas) {
+          // normalizar y tomar campos relevantes si existen
+          programas.push({
+            fam_id: famMeta.fam_id,
+            fam_descripcion: famMeta.fam_descripcion,
+            fam_url_ruta: famMeta.fam_url_ruta,
+            prog_codigo: p.prog_codigo ?? p.codigo ?? null,
+            prog_codigo_ficha: p.prog_codigo_ficha ?? p.codigo_ficha ?? null,
+            prog_nombre: p.prog_nombre ?? p.nombre ?? null,
+            prog_etiqueta: p.prog_etiqueta ?? null,
+            prog_url_inscripcion: p.prog_url_inscripcion ?? p.url_inscripcion ?? null,
+            prog_url_descripcion: p.prog_url_descripcion ?? p.url_descripcion ?? null,
+            prog_estado: p.prog_estado ?? null,
+            prog_duracion: p.prog_duracion ?? null,
+            prog_requisitos: p.prog_requisitos ?? null,
+            prog_contenido: p.prog_contenido ?? null,
+            raw: p // mantengo el objeto original por si quieres más campos
+          });
+        }
+      }
+    }
+
+    // Si no encontramos nada
+    if (programas.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron programas en xhr_responses.json' });
+    }
+
+    // Aplicar filtros por query params (opcional)
+    const { fam_id, prog_codigo, q, limit } = req.query;
+    let result = programas;
+
+    if (fam_id) {
+      result = result.filter(r => String(r.fam_id) === String(fam_id));
+    }
+    if (prog_codigo) {
+      result = result.filter(r => String(r.prog_codigo) === String(prog_codigo));
+    }
+    if (q) {
+      const ql = String(q).toLowerCase();
+      result = result.filter(r =>
+        (r.prog_nombre && r.prog_nombre.toLowerCase().includes(ql)) ||
+        (r.prog_contenido && String(r.prog_contenido).toLowerCase().includes(ql)) ||
+        (r.fam_descripcion && String(r.fam_descripcion).toLowerCase().includes(ql))
+      );
+    }
+
+    const max = Math.min(1000, parseInt(limit || '0') || result.length);
+    if (max && result.length > max) result = result.slice(0, max);
+
+    return res.json({ total: result.length, items: result });
+
+  } catch (error) {
+    console.error('Error en /directorio_contruccion_madera:', error);
+    return res.status(500).json({ error: 'Error interno al procesar xhr_responses.json' });
+  }
+});
+
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
