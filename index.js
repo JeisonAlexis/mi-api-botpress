@@ -22,8 +22,6 @@ const URL1 =
 const URL2 =
   "https://www.unipamplona.edu.co/unipamplona/portalIG/home_77/recursos/01general/07072024/04_docentes_pamplona.jsp";
 
-
-
 app.get("/programas-acreditados", async (req, res) => {
   try {
     const { data } = await axios.get(URL);
@@ -843,7 +841,7 @@ app.get("/recuperar-cuenta-sofia", async (req, res) => {
       if (titulo.toLowerCase().includes("contraseña")) {
         pregunta = titulo;
         respuesta = cuerpo;
-        return false; 
+        return false;
       }
     });
 
@@ -991,7 +989,6 @@ app.get("/horarios-sena", async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    
     const pregunta = $("div.titulopregunta")
       .filter((i, el) =>
         $(el)
@@ -1029,13 +1026,11 @@ app.get("/convocatoria", async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    
     const faqs = [];
     $(".titulopregunta").each((i, elem) => {
       const pregunta = $(elem).text().trim();
       const respuesta = $(elem).next(".respuesta").text().trim();
 
-      
       if (pregunta.includes("¿Cuándo son las próximas convocatorias?")) {
         faqs.push({ pregunta, respuesta });
       }
@@ -1045,7 +1040,7 @@ app.get("/convocatoria", async (req, res) => {
       return res.status(404).json({ error: "Pregunta no encontrada." });
     }
 
-    res.json(faqs[0]); 
+    res.json(faqs[0]);
   } catch (error) {
     console.error("Error al obtener la página:", error.message);
     res.status(500).json({ error: "Error al capturar los datos." });
@@ -1082,7 +1077,8 @@ app.get("/programas-virtual-sena", async (req, res) => {
         if (!href) return;
 
         if (href.endsWith(".pdf")) {
-          pdf = new URL(href.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/").href;
+          pdf = new URL(href.replace(/\\/g, "/"), "https://zajuna.sena.edu.co/")
+            .href;
         }
 
         if (href.includes("youtube.com") || href.includes("youtu.be")) {
@@ -1109,14 +1105,14 @@ app.get("/programas-virtual-sena", async (req, res) => {
   }
 });
 
-app.get('/ofertas-ciudad', async (req, res) => {
+app.get("/ofertas-ciudad", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
@@ -1124,15 +1120,19 @@ app.get('/ofertas-ciudad', async (req, res) => {
 
     let resultado = null;
 
-    $('.titulopregunta').each((_, element) => {
+    $(".titulopregunta").each((_, element) => {
       const pregunta = $(element).text().trim();
-      
-      if (pregunta.includes('¿Cómo consultar el número de ofertas disponibles en su ciudad?')) {
-        const respuesta = $(element).next('.respuesta').text().trim();
+
+      if (
+        pregunta.includes(
+          "¿Cómo consultar el número de ofertas disponibles en su ciudad?"
+        )
+      ) {
+        const respuesta = $(element).next(".respuesta").text().trim();
 
         resultado = {
           pregunta,
-          respuesta
+          respuesta,
         };
       }
     });
@@ -1140,79 +1140,80 @@ app.get('/ofertas-ciudad', async (req, res) => {
     if (resultado) {
       res.json(resultado);
     } else {
-      res.status(404).json({ error: 'Pregunta no encontrada' });
+      res.status(404).json({ error: "Pregunta no encontrada" });
     }
-
   } catch (error) {
-    res.status(500).json({ error: 'Error al consultar la página del SENA', detalles: error.message });
+    res
+      .status(500)
+      .json({
+        error: "Error al consultar la página del SENA",
+        detalles: error.message,
+      });
   }
 });
 
-
-app.get('/horario-modalidad-combinada', async (req, res) => {
+app.get("/horario-modalidad-combinada", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
-    const titulo = $('div.titulopregunta:contains("¿En qué consiste el horario en modalidad combinada?")');
-    const respuesta = titulo.next('.respuesta').html();
+    const titulo = $(
+      'div.titulopregunta:contains("¿En qué consiste el horario en modalidad combinada?")'
+    );
+    const respuesta = titulo.next(".respuesta").html();
 
     if (respuesta) {
       res.json({
         pregunta: titulo.text().trim(),
-        respuesta: respuesta.trim()
+        respuesta: respuesta.trim(),
       });
     } else {
-      res.status(404).json({ error: 'Pregunta no encontrada en la página.' });
+      res.status(404).json({ error: "Pregunta no encontrada en la página." });
     }
-
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los datos del SENA.' });
+    res.status(500).json({ error: "Error al obtener los datos del SENA." });
   }
 });
 
-app.get('/modalidades-formacion', async (req, res) => {
+app.get("/modalidades-formacion", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
 
-    
-    const titulo = $('div.titulopregunta:contains("¿Qué son las modalidades de formación SENA?")');
+    const titulo = $(
+      'div.titulopregunta:contains("¿Qué son las modalidades de formación SENA?")'
+    );
 
     if (titulo.length === 0) {
-      return res.status(404).json({ error: 'Pregunta no encontrada' });
+      return res.status(404).json({ error: "Pregunta no encontrada" });
     }
 
-    
-    const respuesta = titulo.next('.respuesta').html();
+    const respuesta = titulo.next(".respuesta").html();
 
     return res.json({
       pregunta: titulo.text().trim(),
-      respuesta: respuesta.trim()
+      respuesta: respuesta.trim(),
     });
-
   } catch (error) {
-    console.error('Error al obtener los datos:', error.message);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error("Error al obtener los datos:", error.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
-
-
 
 app.get("/directorio", async (req, res) => {
   try {
@@ -1220,14 +1221,13 @@ app.get("/directorio", async (req, res) => {
       "https://metalmecanicosena.blogspot.com/p/directorio-cmm.html",
       {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(data);
 
-    
     const directorio = [];
 
     $(".directorio-dependencia .directorio-roles li").each((_, el) => {
@@ -1240,7 +1240,7 @@ app.get("/directorio", async (req, res) => {
         nombre,
         cargo,
         correo,
-        imagen
+        imagen,
       });
     });
 
@@ -1251,15 +1251,15 @@ app.get("/directorio", async (req, res) => {
   }
 });
 
-
 app.get("/regionales", async (req, res) => {
   try {
-    const urlOrigen = "https://www.sena.edu.co/es-co/regionales/Paginas/default.aspx";
+    const urlOrigen =
+      "https://www.sena.edu.co/es-co/regionales/Paginas/default.aspx";
 
     const { data } = await axios.get(urlOrigen, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
-      }
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
     });
 
     const $ = cheerio.load(data);
@@ -1271,24 +1271,26 @@ app.get("/regionales", async (req, res) => {
       imagen = `https://www.sena.edu.co${imagen}`;
     }
 
-    res.json({ 
-      frase, 
-      imagen, 
-      fuente: urlOrigen 
+    res.json({
+      frase,
+      imagen,
+      fuente: urlOrigen,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener información de regionales" });
+    res
+      .status(500)
+      .json({ error: "Error al obtener información de regionales" });
   }
 });
 
 app.get("/directorio_contruccion_madera", async (req, res) => {
   try {
-    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html"; 
+    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
     const { data } = await axios.get(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
-      }
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
     });
 
     const $ = cheerio.load(data);
@@ -1298,14 +1300,15 @@ app.get("/directorio_contruccion_madera", async (req, res) => {
     $(".leader").each((i, el) => {
       const nombre = $(el).find(".leader-details-name").text().trim();
       const cargo = $(el).find(".leader-details p").first().text().trim();
-      const correo = $(el).find(".correo a").attr("href")?.replace("mailto:", "") || "";
+      const correo =
+        $(el).find(".correo a").attr("href")?.replace("mailto:", "") || "";
       const imagen = $(el).find("img").attr("src") || "";
 
       directivos.push({
         nombre,
         cargo,
         correo,
-        imagen
+        imagen,
       });
     });
 
@@ -1316,55 +1319,61 @@ app.get("/directorio_contruccion_madera", async (req, res) => {
   }
 });
 
-app.get('/prueba_seleccion', async (req, res) => {
+app.get("/prueba_seleccion", async (req, res) => {
   try {
     const { data: html } = await axios.get(
-      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
-        }
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
       }
     );
 
     const $ = cheerio.load(html);
 
-    
-    const titulo = $('div.titulopregunta:contains("¿Qué debo tener en cuenta para presentar la prueba de selección?")');
+    const titulo = $(
+      'div.titulopregunta:contains("¿Qué debo tener en cuenta para presentar la prueba de selección?")'
+    );
 
     if (titulo.length === 0) {
-      return res.status(404).json({ error: 'Pregunta no encontrada' });
+      return res.status(404).json({ error: "Pregunta no encontrada" });
     }
 
-    
-    const respuesta = titulo.next('.respuesta').html();
+    const respuesta = titulo.next(".respuesta").html();
 
     return res.json({
       pregunta: titulo.text().trim(),
-      respuesta: respuesta.trim()
+      respuesta: respuesta.trim(),
     });
-
   } catch (error) {
-    console.error('Error al obtener los datos:', error.message);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error("Error al obtener los datos:", error.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
-
-app.get('/prueba', async (req, res) => {
+app.get("/prueba", async (req, res) => {
   try {
-    const filePath = path.join(process.cwd(), 'xhr_responses.json'); // ajustar si lo guardas en otra carpeta
-    const raw = await fs.promises.readFile("archivo", "utf8").catch(() => null);
+    const path = require("path");
+    const filePath = path.join(__dirname, "xhr_responses.json"); // __dirname siempre apunta a la carpeta actual
+    const raw = await fs.promises.readFile(filePath, "utf8").catch(() => null);
+
 
     if (!raw) {
-      return res.status(500).json({ error: 'Archivo xhr_responses.json no encontrado en el proyecto.' });
+      return res
+        .status(500)
+        .json({
+          error: "Archivo xhr_responses.json no encontrado en el proyecto.",
+        });
     }
 
     let responses;
     try {
       responses = JSON.parse(raw);
     } catch (err) {
-      return res.status(500).json({ error: 'xhr_responses.json no contiene JSON válido.' });
+      return res
+        .status(500)
+        .json({ error: "xhr_responses.json no contiene JSON válido." });
     }
 
     // Colección donde guardaremos objetos familiares detectados
@@ -1372,7 +1381,7 @@ app.get('/prueba', async (req, res) => {
 
     // Función recursiva que busca objetos con keys característicos
     function findFamilies(node) {
-      if (!node || typeof node !== 'object') return;
+      if (!node || typeof node !== "object") return;
       if (Array.isArray(node)) {
         for (const item of node) findFamilies(item);
         return;
@@ -1389,13 +1398,17 @@ app.get('/prueba', async (req, res) => {
           fam_id: node.fam_id || null,
           fam_descripcion: node.fam_descripcion || null,
           fam_url_ruta: node.fam_url_ruta || null,
-          programas: node.programas
+          programas: node.programas,
         });
         return;
       }
       // Recorremos claves para buscar más profundo
       for (const k of Object.keys(node)) {
-        try { findFamilies(node[k]); } catch (e) { /* ignore */ }
+        try {
+          findFamilies(node[k]);
+        } catch (e) {
+          /* ignore */
+        }
       }
     }
 
@@ -1405,7 +1418,7 @@ app.get('/prueba', async (req, res) => {
       let body = resp.body ?? resp.bodyParsed ?? resp.data ?? null;
 
       // Si body es string, intentar parsear JSON
-      if (typeof body === 'string') {
+      if (typeof body === "string") {
         try {
           body = JSON.parse(body);
         } catch (e) {
@@ -1415,7 +1428,7 @@ app.get('/prueba', async (req, res) => {
       }
 
       // Si resp itself parece contener la estructura (por ejemplo si file contiene directamente el JSON deseado)
-      if (!body && typeof resp === 'object') {
+      if (!body && typeof resp === "object") {
         // algunos dumps guardan el objeto directamente
         findFamilies(resp);
       }
@@ -1429,9 +1442,17 @@ app.get('/prueba', async (req, res) => {
     if (families.length === 0) {
       // buscar arrays dentro de responses
       function findProgramArrays(node) {
-        if (!node || typeof node !== 'object') return null;
+        if (!node || typeof node !== "object") return null;
         if (Array.isArray(node)) {
-          if (node.length > 0 && node.some(it => it && typeof it === 'object' && ('prog_codigo' in it || 'prog_nombre' in it))) {
+          if (
+            node.length > 0 &&
+            node.some(
+              (it) =>
+                it &&
+                typeof it === "object" &&
+                ("prog_codigo" in it || "prog_nombre" in it)
+            )
+          ) {
             // lo consideramos un array de programas
             return node;
           }
@@ -1452,13 +1473,22 @@ app.get('/prueba', async (req, res) => {
 
       for (const resp of responses) {
         let body = resp.body ?? resp.bodyParsed ?? resp.data ?? resp;
-        if (typeof body === 'string') {
-          try { body = JSON.parse(body); } catch (e) { body = null; }
+        if (typeof body === "string") {
+          try {
+            body = JSON.parse(body);
+          } catch (e) {
+            body = null;
+          }
         }
         const arr = findProgramArrays(body);
         if (arr) {
           // convertir array de programas en una "familia" anonima
-          families.push({ fam_id: null, fam_descripcion: null, fam_url_ruta: null, programas: arr });
+          families.push({
+            fam_id: null,
+            fam_descripcion: null,
+            fam_url_ruta: null,
+            programas: arr,
+          });
         }
       }
     }
@@ -1469,7 +1499,7 @@ app.get('/prueba', async (req, res) => {
       const famMeta = {
         fam_id: fam.fam_id ?? null,
         fam_descripcion: fam.fam_descripcion ?? null,
-        fam_url_ruta: fam.fam_url_ruta ?? null
+        fam_url_ruta: fam.fam_url_ruta ?? null,
       };
       if (Array.isArray(fam.programas)) {
         for (const p of fam.programas) {
@@ -1482,13 +1512,15 @@ app.get('/prueba', async (req, res) => {
             prog_codigo_ficha: p.prog_codigo_ficha ?? p.codigo_ficha ?? null,
             prog_nombre: p.prog_nombre ?? p.nombre ?? null,
             prog_etiqueta: p.prog_etiqueta ?? null,
-            prog_url_inscripcion: p.prog_url_inscripcion ?? p.url_inscripcion ?? null,
-            prog_url_descripcion: p.prog_url_descripcion ?? p.url_descripcion ?? null,
+            prog_url_inscripcion:
+              p.prog_url_inscripcion ?? p.url_inscripcion ?? null,
+            prog_url_descripcion:
+              p.prog_url_descripcion ?? p.url_descripcion ?? null,
             prog_estado: p.prog_estado ?? null,
             prog_duracion: p.prog_duracion ?? null,
             prog_requisitos: p.prog_requisitos ?? null,
             prog_contenido: p.prog_contenido ?? null,
-            raw: p // mantengo el objeto original por si quieres más campos
+            raw: p, // mantengo el objeto original por si quieres más campos
           });
         }
       }
@@ -1496,7 +1528,9 @@ app.get('/prueba', async (req, res) => {
 
     // Si no encontramos nada
     if (programas.length === 0) {
-      return res.status(404).json({ error: 'No se encontraron programas en xhr_responses.json' });
+      return res
+        .status(404)
+        .json({ error: "No se encontraron programas en xhr_responses.json" });
     }
 
     // Aplicar filtros por query params (opcional)
@@ -1504,32 +1538,36 @@ app.get('/prueba', async (req, res) => {
     let result = programas;
 
     if (fam_id) {
-      result = result.filter(r => String(r.fam_id) === String(fam_id));
+      result = result.filter((r) => String(r.fam_id) === String(fam_id));
     }
     if (prog_codigo) {
-      result = result.filter(r => String(r.prog_codigo) === String(prog_codigo));
+      result = result.filter(
+        (r) => String(r.prog_codigo) === String(prog_codigo)
+      );
     }
     if (q) {
       const ql = String(q).toLowerCase();
-      result = result.filter(r =>
-        (r.prog_nombre && r.prog_nombre.toLowerCase().includes(ql)) ||
-        (r.prog_contenido && String(r.prog_contenido).toLowerCase().includes(ql)) ||
-        (r.fam_descripcion && String(r.fam_descripcion).toLowerCase().includes(ql))
+      result = result.filter(
+        (r) =>
+          (r.prog_nombre && r.prog_nombre.toLowerCase().includes(ql)) ||
+          (r.prog_contenido &&
+            String(r.prog_contenido).toLowerCase().includes(ql)) ||
+          (r.fam_descripcion &&
+            String(r.fam_descripcion).toLowerCase().includes(ql))
       );
     }
 
-    const max = Math.min(1000, parseInt(limit || '0') || result.length);
+    const max = Math.min(1000, parseInt(limit || "0") || result.length);
     if (max && result.length > max) result = result.slice(0, max);
 
     return res.json({ total: result.length, items: result });
-
   } catch (error) {
-    console.error('Error el endpoint:', error);
-    return res.status(500).json({ error: 'Error interno al procesar xhr_responses.json' });
+    console.error("Error el endpoint:", error);
+    return res
+      .status(500)
+      .json({ error: "Error interno al procesar xhr_responses.json" });
   }
 });
-
-
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
