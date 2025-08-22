@@ -1213,6 +1213,7 @@ app.get('/modalidades-formacion', async (req, res) => {
 });
 
 
+
 app.get("/directorio", async (req, res) => {
   try {
     const { data } = await axios.get(
@@ -1315,6 +1316,29 @@ app.get("/directorio_contruccion_madera", async (req, res) => {
   }
 });
 
+app.get("/prueba_seleccion", async (req, res) => {
+  try {
+    const response = await fetch("URL_DE_TU_HTML", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
+      }
+    });
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const pregunta = $(".titulopregunta").text().trim();
+    const respuesta = $(".respuesta").text().trim();
+
+    res.json({
+      pregunta,
+      respuesta
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al capturar los datos" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
