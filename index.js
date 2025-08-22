@@ -1316,27 +1316,37 @@ app.get("/directorio_contruccion_madera", async (req, res) => {
   }
 });
 
-app.get("/prueba_seleccion", async (req, res) => {
+app.get('/prueba_seleccion', async (req, res) => {
   try {
-    const response = await fetch("https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
+    const { data: html } = await axios.get(
+      'https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Botpress/1.0)'
+        }
       }
-    });
+    );
 
-    const html = await response.text();
     const $ = cheerio.load(html);
 
-    const pregunta = $(".titulopregunta").text().trim();
-    const respuesta = $(".respuesta").text().trim();
+    
+    const titulo = $('div.titulopregunta:contains("¿Qué debo tener en cuenta para presentar la prueba de selección?")');
 
-    res.json({
-      pregunta,
-      respuesta
+    if (titulo.length === 0) {
+      return res.status(404).json({ error: 'Pregunta no encontrada' });
+    }
+
+    
+    const respuesta = titulo.next('.respuesta').html();
+
+    return res.json({
+      pregunta: titulo.text().trim(),
+      respuesta: respuesta.trim()
     });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al capturar los datos" });
+    console.error('Error al obtener los datos:', error.message);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
