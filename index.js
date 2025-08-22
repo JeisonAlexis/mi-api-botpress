@@ -1350,7 +1350,6 @@ app.get('/prueba_seleccion', async (req, res) => {
   }
 });
 
-const fs = require('fs').promises;
 
 app.get('/prueba', async (req, res) => {
   try {
