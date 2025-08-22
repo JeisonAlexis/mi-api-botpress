@@ -1355,7 +1355,7 @@ const fs = require('fs').promises;
 app.get('/prueba', async (req, res) => {
   try {
     const filePath = path.join(process.cwd(), 'xhr_responses.json'); // ajustar si lo guardas en otra carpeta
-    const raw = await fs.readFile(filePath, 'utf8').catch(() => null);
+    const raw = await fs.promises.readFile("archivo", "utf8").catch(() => null);
 
     if (!raw) {
       return res.status(500).json({ error: 'Archivo xhr_responses.json no encontrado en el proyecto.' });
