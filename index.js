@@ -1318,7 +1318,7 @@ app.get("/directorio_contruccion_madera", async (req, res) => {
 
 app.get("/prueba_seleccion", async (req, res) => {
   try {
-    const response = await fetch("URL_DE_TU_HTML", {
+    const response = await fetch("https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes", {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)"
       }
