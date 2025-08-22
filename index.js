@@ -1350,6 +1350,8 @@ app.get('/prueba_seleccion', async (req, res) => {
   }
 });
 
+const fs = require('fs').promises;
+
 app.get('/prueba', async (req, res) => {
   try {
     const filePath = path.join(process.cwd(), 'xhr_responses.json'); // ajustar si lo guardas en otra carpeta
@@ -1523,7 +1525,7 @@ app.get('/prueba', async (req, res) => {
     return res.json({ total: result.length, items: result });
 
   } catch (error) {
-    console.error('Error en /directorio_contruccion_madera:', error);
+    console.error('Error el endpoint:', error);
     return res.status(500).json({ error: 'Error interno al procesar xhr_responses.json' });
   }
 });
