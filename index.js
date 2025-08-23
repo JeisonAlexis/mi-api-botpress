@@ -1357,19 +1357,26 @@ const puppeteer = require("puppeteer");
 
 app.get("/prueba", async (req, res) => {
   try {
-    const url = req.query.url || "https://ejecucionformacion.sena.edu.co/cursos-cortos"; // URL por defecto
+    const url =
+      req.query.url ||
+      "https://ejecucionformacion.sena.edu.co/cursos-cortos"; // URL por defecto
     const selector = req.query.selector || "";
 
+    // 1. Ejecutar Puppeteer para scrapear y generar xhr_responses.json
     await new Promise((resolve, reject) => {
-      exec(`node scrape_puppeteer.js "${url}" "${selector}"`, { cwd: __dirname }, (error, stdout, stderr) => {
-        if (error) {
-          console.error("Error al ejecutar scrape_puppeteer.js:", error);
-          return reject(error);
+      exec(
+        `node scrape_puppeteer.js "${url}" "${selector}"`,
+        { cwd: __dirname },
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error("Error al ejecutar scrape_puppeteer.js:", error);
+            return reject(error);
+          }
+          if (stderr) console.error("stderr:", stderr);
+          console.log("stdout:", stdout);
+          resolve();
         }
-        if (stderr) console.error("stderr:", stderr);
-        console.log("stdout:", stdout);
-        resolve();
-      });
+      );
     });
 
     // 2. Leer archivo generado
@@ -1391,8 +1398,7 @@ app.get("/prueba", async (req, res) => {
         .json({ error: "xhr_responses.json no contiene JSON válido." });
     }
 
-    // 3. (Aquí va todo tu código actual para procesar families y programas)
-    // --- copio la parte de tu script actual ---
+    // 3. Buscar familias y programas dentro del JSON
     const families = [];
     function findFamilies(node) {
       if (!node || typeof node !== "object") return;
@@ -1437,6 +1443,7 @@ app.get("/prueba", async (req, res) => {
       }
     }
 
+    // 4. Normalizar programas
     const programas = [];
     for (const fam of families) {
       const famMeta = {
@@ -1454,8 +1461,10 @@ app.get("/prueba", async (req, res) => {
             prog_codigo_ficha: p.prog_codigo_ficha ?? p.codigo_ficha ?? null,
             prog_nombre: p.prog_nombre ?? p.nombre ?? null,
             prog_etiqueta: p.prog_etiqueta ?? null,
-            prog_url_inscripcion: p.prog_url_inscripcion ?? p.url_inscripcion ?? null,
-            prog_url_descripcion: p.prog_url_descripcion ?? p.url_descripcion ?? null,
+            prog_url_inscripcion:
+              p.prog_url_inscripcion ?? p.url_inscripcion ?? null,
+            prog_url_descripcion:
+              p.prog_url_descripcion ?? p.url_descripcion ?? null,
             prog_estado: p.prog_estado ?? null,
             prog_duracion: p.prog_duracion ?? null,
             prog_requisitos: p.prog_requisitos ?? null,
@@ -1467,10 +1476,12 @@ app.get("/prueba", async (req, res) => {
     }
 
     if (programas.length === 0) {
-      return res.status(404).json({ error: "No se encontraron programas en xhr_responses.json" });
+      return res
+        .status(404)
+        .json({ error: "No se encontraron programas en xhr_responses.json" });
     }
 
-    // filtros
+    // 5. Filtros de búsqueda
     const { fam_id, prog_codigo, q, limit } = req.query;
     let result = programas;
 
@@ -1485,21 +1496,26 @@ app.get("/prueba", async (req, res) => {
       result = result.filter(
         (r) =>
           (r.prog_nombre && r.prog_nombre.toLowerCase().includes(ql)) ||
-          (r.prog_contenido && String(r.prog_contenido).toLowerCase().includes(ql)) ||
-          (r.fam_descripcion && String(r.fam_descripcion).toLowerCase().includes(ql))
+          (r.prog_contenido &&
+            String(r.prog_contenido).toLowerCase().includes(ql)) ||
+          (r.fam_descripcion &&
+            String(r.fam_descripcion).toLowerCase().includes(ql))
       );
     }
 
     const max = Math.min(1000, parseInt(limit || "0") || result.length);
     if (max && result.length > max) result = result.slice(0, max);
 
+    // 6. Respuesta final
     return res.json({ total: result.length, items: result });
-
   } catch (error) {
     console.error("Error en el endpoint:", error);
-    return res.status(500).json({ error: "Error interno al procesar xhr_responses.json" });
+    return res
+      .status(500)
+      .json({ error: "Error interno al procesar xhr_responses.json" });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
