@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "postinstall": "node -e \"console.log('Forzando descarga de Chromium…')\" && npx puppeteer browsers install chrome"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
