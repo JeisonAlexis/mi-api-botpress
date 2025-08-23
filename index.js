@@ -1356,9 +1356,11 @@ const { exec } = require("child_process");
 
 app.get("/prueba", async (req, res) => {
   try {
-    // 1. Ejecutar scrape_puppeteer.js
+    const url = req.query.url || "https://ejecucionformacion.sena.edu.co/cursos-cortos"; // URL por defecto
+    const selector = req.query.selector || "";
+
     await new Promise((resolve, reject) => {
-      exec("node scrape_puppeteer.js", { cwd: __dirname }, (error, stdout, stderr) => {
+      exec(`node scrape_puppeteer.js "${url}" "${selector}"`, { cwd: __dirname }, (error, stdout, stderr) => {
         if (error) {
           console.error("Error al ejecutar scrape_puppeteer.js:", error);
           return reject(error);
