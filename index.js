@@ -1353,6 +1353,7 @@ app.get("/prueba_seleccion", async (req, res) => {
 });
 
 const { exec } = require("child_process");
+const puppeteer = require("puppeteer");
 
 app.get("/prueba", async (req, res) => {
   try {
