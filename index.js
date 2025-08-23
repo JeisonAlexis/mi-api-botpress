@@ -1352,13 +1352,10 @@ app.get("/prueba_seleccion", async (req, res) => {
   }
 });
 
-const { exec } = require("child_process");
-const puppeteer = require("puppeteer");
-
 app.get("/prueba", async (req, res) => {
   try {
     const path = require("path");
-    const filePath = path.join(__dirname, "xhr_responses.json"); // __dirname siempre apunta a la carpeta actual
+    const filePath = path.join(__dirname, "xhr_responses.json"); 
     const raw = await fs.promises.readFile(filePath, "utf8").catch(() => null);
 
 
@@ -1379,24 +1376,23 @@ app.get("/prueba", async (req, res) => {
         .json({ error: "xhr_responses.json no contiene JSON válido." });
     }
 
-    // Colección donde guardaremos objetos familiares detectados
     const families = [];
 
-    // Función recursiva que busca objetos con keys característicos
+
     function findFamilies(node) {
       if (!node || typeof node !== "object") return;
       if (Array.isArray(node)) {
         for (const item of node) findFamilies(item);
         return;
       }
-      // Si el nodo tiene 'fam_id' y 'programas' -> lo consideramos una familia
+
       if (node.fam_id && Array.isArray(node.programas)) {
         families.push(node);
         return;
       }
-      // También puede existir un objeto que tenga 'programas' como clave principal
+
       if (Array.isArray(node.programas)) {
-        // crear una familia "anonima" si no tiene fam_id
+
         families.push({
           fam_id: node.fam_id || null,
           fam_descripcion: node.fam_descripcion || null,
@@ -1405,34 +1401,34 @@ app.get("/prueba", async (req, res) => {
         });
         return;
       }
-      // Recorremos claves para buscar más profundo
+
       for (const k of Object.keys(node)) {
         try {
           findFamilies(node[k]);
         } catch (e) {
-          /* ignore */
+
         }
       }
     }
 
-    // Recorremos cada entrada en xhr_responses.json; las respuestas pueden tener .body o .bodyParsed u otros
+
     for (const resp of responses) {
-      // normalizar posible body
+
       let body = resp.body ?? resp.bodyParsed ?? resp.data ?? null;
 
-      // Si body es string, intentar parsear JSON
+
       if (typeof body === "string") {
         try {
           body = JSON.parse(body);
         } catch (e) {
-          // no JSON -> ignorar
+
           body = null;
         }
       }
 
-      // Si resp itself parece contener la estructura (por ejemplo si file contiene directamente el JSON deseado)
+
       if (!body && typeof resp === "object") {
-        // algunos dumps guardan el objeto directamente
+
         findFamilies(resp);
       }
 
@@ -1441,9 +1437,9 @@ app.get("/prueba", async (req, res) => {
       }
     }
 
-    // Si no encontramos familias, probamos con una heurística: buscar arrays con objetos que tengan 'prog_codigo'
+
     if (families.length === 0) {
-      // buscar arrays dentro de responses
+
       function findProgramArrays(node) {
         if (!node || typeof node !== "object") return null;
         if (Array.isArray(node)) {
@@ -1456,10 +1452,10 @@ app.get("/prueba", async (req, res) => {
                 ("prog_codigo" in it || "prog_nombre" in it)
             )
           ) {
-            // lo consideramos un array de programas
+
             return node;
           }
-          // si es array pero no es programas, buscar dentro de items
+
           for (const item of node) {
             const r = findProgramArrays(item);
             if (r) return r;
@@ -1485,7 +1481,7 @@ app.get("/prueba", async (req, res) => {
         }
         const arr = findProgramArrays(body);
         if (arr) {
-          // convertir array de programas en una "familia" anonima
+
           families.push({
             fam_id: null,
             fam_descripcion: null,
@@ -1496,7 +1492,7 @@ app.get("/prueba", async (req, res) => {
       }
     }
 
-    // Aplanar todas las familias a una lista de programas con metadatos de familia incluidos
+
     const programas = [];
     for (const fam of families) {
       const famMeta = {
@@ -1506,7 +1502,7 @@ app.get("/prueba", async (req, res) => {
       };
       if (Array.isArray(fam.programas)) {
         for (const p of fam.programas) {
-          // normalizar y tomar campos relevantes si existen
+
           programas.push({
             fam_id: famMeta.fam_id,
             fam_descripcion: famMeta.fam_descripcion,
@@ -1523,20 +1519,20 @@ app.get("/prueba", async (req, res) => {
             prog_duracion: p.prog_duracion ?? null,
             prog_requisitos: p.prog_requisitos ?? null,
             prog_contenido: p.prog_contenido ?? null,
-            raw: p, // mantengo el objeto original por si quieres más campos
+            raw: p, 
           });
         }
       }
     }
 
-    // Si no encontramos nada
+
     if (programas.length === 0) {
       return res
         .status(404)
         .json({ error: "No se encontraron programas en xhr_responses.json" });
     }
 
-    // Aplicar filtros por query params (opcional)
+
     const { fam_id, prog_codigo, q, limit } = req.query;
     let result = programas;
 
