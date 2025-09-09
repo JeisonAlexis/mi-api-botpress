@@ -1004,6 +1004,7 @@ app.get("/translado_modalidad", async (req, res) => {
   }
 });
 
+
 app.listen(port, () => {
-  console.log(`Servidor escuchando en el puertoo ${port}`);
+  console.log(`Servidor escuchando en el puerto ${port}`);
 });
