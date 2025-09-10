@@ -1039,5 +1039,5 @@ app.get("/inscripcion_multiple", async (req, res) => {
 
 
 app.listen(port, () => {
-  console.log(`Servidor escuchando en el puerto ${port}`);
+  console.log(`Servidor escuchando en el puert ${port}`);
 });
