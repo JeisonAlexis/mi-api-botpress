@@ -1169,6 +1169,39 @@ app.get("/no_inscribirse", async (req, res) => {
   }
 });
 
+app.get("/cancelar_matricula", async (req, res) => {
+  try {
+    const { data: html } = await axios.get(
+      "https://portal.senasofiaplus.edu.co/index.php/ayudas/preguntas-frecuentes",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
+
+    const $ = cheerio.load(html);
+
+    const titulo = $(
+      'div.titulopregunta:contains("¿Por qué motivos podría ser cancelada mi matrícula?")'
+    );
+
+    if (titulo.length === 0) {
+      return res.status(404).json({ error: "Pregunta no encontrada" });
+    }
+
+    const respuesta = titulo.next(".respuesta").html();
+
+    return res.json({
+      pregunta: titulo.text().trim(),
+      respuesta: respuesta.trim(),
+    });
+  } catch (error) {
+    console.error("Error al obtener los datos:", error.message);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
