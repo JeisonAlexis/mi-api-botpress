@@ -519,7 +519,7 @@ app.get("/directorio_contruccion_madera", async (req, res) => {
     res.json(directivos);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener los directivoss" });
+    res.status(500).json({ error: "Error al obtener los directivos" });
   }
 });
 
