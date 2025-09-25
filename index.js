@@ -1218,26 +1218,19 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
     $("h3").each((i, el) => {
       const cargo = $(el).text().trim();
 
+      const divs = $(el).nextAll("div").slice(0, 3);
 
-      const bloque = $(el).next("div");
+      const rawText = divs.text().replace(/\s+/g, " ").trim();
 
-      if (!bloque.text().includes("@")) return;
+      if (!rawText.includes("mail:")) return; 
 
+      const nombre = rawText.split("mail:")[0].trim();
 
-      const nombre = bloque.find("span").first().text().trim();
+      const correoMatch = rawText.match(/mail:\s*([^\s]+)/i);
+      const correo = correoMatch ? correoMatch[1].replace(/&nbsp;/g, "") : "";
 
-
-      const correo = bloque
-        .find("span:contains('mail')")
-        .text()
-        .replace("mail:", "")
-        .trim();
-
-      const telefono = bloque
-        .next("div")
-        .find("span:contains('PBX')")
-        .text()
-        .trim();
+      const telefonoMatch = rawText.match(/PBX:\s*([^)]+Ext:\s*\d*)/i);
+      const telefono = telefonoMatch ? telefonoMatch[0].trim() : "";
 
       directivos.push({
         cargo,
@@ -1253,6 +1246,7 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
     res.status(500).json({ error: "Error al obtener los directivos" });
   }
 });
+
 
 
 app.listen(port, () => {
