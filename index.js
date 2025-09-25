@@ -1256,6 +1256,34 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
   }
 });
 
+app.get("/directorio_minero", async (req, res) => {
+  try {
+    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let imagenes = [];
+
+    $("div.separator img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) {
+        imagenes.push(src);
+      }
+    });
+
+    res.json(imagenes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
