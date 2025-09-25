@@ -1202,7 +1202,7 @@ app.get("/cancelar_matricula", async (req, res) => {
   }
 });
 
-app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
+app.get("/directorio_construccion_madera", async (req, res) => {
   try {
     const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
     const { data } = await axios.get(url, {
@@ -1215,16 +1215,23 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
 
     let directivos = [];
 
-
     $("h3").each((i, el) => {
       const cargo = $(el).text().trim();
 
 
       const bloque = $(el).next("div");
 
-      const nombreCorreo = bloque.find("span").first().text().trim();
-      const mail = bloque.find("span:contains('mail')").text().trim();
-      const correo = mail.split("mail:")[1]?.trim() || "";
+      if (!bloque.text().includes("@")) return;
+
+
+      const nombre = bloque.find("span").first().text().trim();
+
+
+      const correo = bloque
+        .find("span:contains('mail')")
+        .text()
+        .replace("mail:", "")
+        .trim();
 
       const telefono = bloque
         .next("div")
@@ -1234,7 +1241,7 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
 
       directivos.push({
         cargo,
-        nombre: nombreCorreo.split("mail")[0].trim(),
+        nombre,
         correo,
         telefono,
       });
