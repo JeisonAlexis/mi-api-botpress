@@ -1202,7 +1202,7 @@ app.get("/cancelar_matricula", async (req, res) => {
   }
 });
 
-app.get("/directorio_construccion_madera", async (req, res) => {
+app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
   try {
     const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
     const { data } = await axios.get(url, {
