@@ -1217,12 +1217,10 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
 
     $("h3").each((i, el) => {
       const cargo = $(el).text().trim();
-
       const divs = $(el).nextAll("div").slice(0, 3);
-
       const rawText = divs.text().replace(/\s+/g, " ").trim();
 
-      if (!rawText.includes("mail:")) return; 
+      if (!rawText.includes("mail:")) return;
 
       const nombre = rawText.split("mail:")[0].trim();
 
@@ -1240,13 +1238,23 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
       });
     });
 
-    res.json(directivos);
+    let imagenes = [];
+    $("div.separator img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) {
+        imagenes.push(src);
+      }
+    });
+
+    res.json({
+      directivos,
+      imagenes,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener los directivos" });
+    res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
-
 
 
 app.listen(port, () => {
