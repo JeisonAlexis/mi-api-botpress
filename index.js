@@ -1204,7 +1204,7 @@ app.get("/cancelar_matricula", async (req, res) => {
 
 app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
   try {
-    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
+    const url = "https://cedeagro.blogspot.com/p/directorio.html";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
