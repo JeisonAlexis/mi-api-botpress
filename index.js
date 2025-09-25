@@ -1258,7 +1258,7 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
 
 app.get("/directorio_minero", async (req, res) => {
   try {
-    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
+    const url = "https://centronacionalminero.blogspot.com/p/equipo-cm.html";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
