@@ -1202,6 +1202,52 @@ app.get("/cancelar_matricula", async (req, res) => {
   }
 });
 
+app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
+  try {
+    const url = "https://construccionymadera.blogspot.com/p/directorio_24.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let directivos = [];
+
+
+    $("h3").each((i, el) => {
+      const cargo = $(el).text().trim();
+
+
+      const bloque = $(el).next("div");
+
+      const nombreCorreo = bloque.find("span").first().text().trim();
+      const mail = bloque.find("span:contains('mail')").text().trim();
+      const correo = mail.split("mail:")[1]?.trim() || "";
+
+      const telefono = bloque
+        .next("div")
+        .find("span:contains('PBX')")
+        .text()
+        .trim();
+
+      directivos.push({
+        cargo,
+        nombre: nombreCorreo.split("mail")[0].trim(),
+        correo,
+        telefono,
+      });
+    });
+
+    res.json(directivos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los directivos" });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
