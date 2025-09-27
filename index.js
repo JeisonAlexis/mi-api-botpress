@@ -1284,6 +1284,49 @@ app.get("/directorio_minero", async (req, res) => {
 });
 
 
+app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
+  try {
+    const url = "https://cedagro.blogspot.com/p/directorio-cedagro.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let directivos = [];
+
+    $("tr").each((i, el) => {
+      if (i === 0) return;
+
+      const tds = $(el).find("td");
+
+      if (tds.length < 3) return;
+
+      const cargo = $(tds[0]).text().trim();
+      const nombre = $(tds[1]).text().trim();
+      const correo = $(tds[2]).text().replace(/\s+/g, "").trim(); 
+
+      if (cargo && nombre && correo) {
+        directivos.push({
+          cargo,
+          nombre,
+          correo,
+        });
+      }
+    });
+
+    res.json({
+      directivos,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
