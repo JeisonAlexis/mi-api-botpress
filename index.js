@@ -1294,30 +1294,40 @@ app.get("/directorio_biotecnologia_agropecuaria", async (req, res) => {
     });
 
     const $ = cheerio.load(data);
+
     let directivos = [];
 
-    $("div, p, span").each((i, el) => {
+    $("div, p, span, li").each((i, el) => {
       const text = $(el).text().replace(/\s+/g, " ").trim();
 
-      if (/@sena.edu.co/i.test(text)) {
-        const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/);
-        const correo = correoMatch ? correoMatch[0] : "";
+      if (/@sena\.edu\.co/i.test(text)) {
+        const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/i);
+        const correo = correoMatch ? correoMatch[0].toLowerCase() : "";
 
-        const nombreParte = text.split(correo)[0].trim();
-        const nombre = nombreParte.replace(/Correo:|Mail:|Email:/gi, "").trim();
+        const antesCorreo = text.split(correo)[0].trim();
 
-        const cargoParte = text.split(correo)[1] || "";
-        const cargo = cargoParte
-          .replace(/Correo:|Mail:|Email:/gi, "")
-          .replace(/\s+/g, " ")
-          .trim();
+        const cargoRegex =
+          /(Subdirector|Coordinador[^\d]*|Líder[^\d]*|Dinamizador[^\d]*|Apoyo[^\d]*|Seguimiento[^\d]*)/i;
+
+        const cargoMatch = antesCorreo.match(cargoRegex);
+        const cargo = cargoMatch ? cargoMatch[0].trim() : "";
+
+        const nombre = cargo
+          ? antesCorreo.replace(cargo, "").trim()
+          : antesCorreo;
 
         directivos.push({ nombre, cargo, correo });
       }
     });
 
+
     directivos = directivos.filter(
       (d, i, self) => i === self.findIndex((x) => x.correo === d.correo)
+    );
+
+
+    directivos = directivos.filter(
+      (d) => d.nombre.length > 2 || d.cargo.length > 2
     );
 
     res.json({ directivos });
