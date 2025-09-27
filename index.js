@@ -1217,12 +1217,10 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
 
     $("h3").each((i, el) => {
       const cargo = $(el).text().trim();
-
       const divs = $(el).nextAll("div").slice(0, 3);
-
       const rawText = divs.text().replace(/\s+/g, " ").trim();
 
-      if (!rawText.includes("mail:")) return; 
+      if (!rawText.includes("mail:")) return;
 
       const nombre = rawText.split("mail:")[0].trim();
 
@@ -1240,13 +1238,50 @@ app.get("/directorio_agropecuario_agroindustrial", async (req, res) => {
       });
     });
 
-    res.json(directivos);
+    let imagenes = [];
+    $("div.separator img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) {
+        imagenes.push(src);
+      }
+    });
+
+    res.json({
+      directivos,
+      imagenes,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener los directivos" });
+    res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
 
+app.get("/directorio_minero", async (req, res) => {
+  try {
+    const url = "https://centronacionalminero.blogspot.com/p/equipo-cm.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let imagenes = [];
+
+    $("div.separator img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) {
+        imagenes.push(src);
+      }
+    });
+
+    res.json(imagenes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
+});
 
 
 app.listen(port, () => {
