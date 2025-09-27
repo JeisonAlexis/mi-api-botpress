@@ -1298,25 +1298,30 @@ app.get("/directorio_biotecnologia_agropecuaria", async (req, res) => {
     let directivos = [];
 
     $("#post-body-419200844235297081 p").each((i, el) => {
-      const text = $(el).text().replace(/\s+/g, " ").trim();
+      const bold = $(el).find("b").first().text().trim(); 
+      const fullText = $(el).text().replace(/\s+/g, " ").trim();
 
-      if (!/@sena\.edu\.co/i.test(text)) return; 
 
-      const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/i);
+      const correoMatch = fullText.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/i);
       const correo = correoMatch ? correoMatch[0] : "";
 
-      const antesCorreo = text.split(correo)[0].trim();
+      if (!correo) return;
 
-      const cargoRegex =
-        /(Subdirector|Coordinador[^\d]*|Líder[^\d]*|Dinamizador[^\d]*|Apoyo[^\d]*|Seguimiento[^\d]*)/i;
-      const cargoMatch = antesCorreo.match(cargoRegex);
+      let cargo = "";
+      if (bold && correo) {
+        const between = fullText
+          .replace(bold, "")
+          .replace(correo, "")
+          .replace(/Correo:/i, "")
+          .trim();
+        cargo = between;
+      }
 
-      const cargo = cargoMatch ? cargoMatch[0].trim() : "";
-      const nombre = cargo
-        ? antesCorreo.replace(cargo, "").trim()
-        : antesCorreo;
-
-      directivos.push({ nombre, cargo, correo });
+      directivos.push({
+        nombre: bold,
+        cargo,
+        correo,
+      });
     });
 
     res.json({ directivos });
