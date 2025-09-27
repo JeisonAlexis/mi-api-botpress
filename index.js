@@ -1296,33 +1296,37 @@ app.get("/directorio_biotecnologia_agropecuaria", async (req, res) => {
     const $ = cheerio.load(data);
 
     let directivos = [];
+    let actual = {};
 
-    $("#post-body-419200844235297081 p").each((i, el) => {
-      const bold = $(el).find("b").first().text().trim(); 
-      const fullText = $(el).text().replace(/\s+/g, " ").trim();
+    $("#post-body-419200844235297081 *").each((i, el) => {
+      const text = $(el).text().replace(/\s+/g, " ").trim();
+      if (!text) return;
 
-
-      const correoMatch = fullText.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/i);
-      const correo = correoMatch ? correoMatch[0] : "";
-
-      if (!correo) return;
-
-      let cargo = "";
-      if (bold && correo) {
-        const between = fullText
-          .replace(bold, "")
-          .replace(correo, "")
-          .replace(/Correo:/i, "")
-          .trim();
-        cargo = between;
+      if ($(el).find("b").length > 0) {
+        if (Object.keys(actual).length > 0) {
+          directivos.push(actual);
+          actual = {};
+        }
+        actual.nombre = text;
       }
 
-      directivos.push({
-        nombre: bold,
-        cargo,
-        correo,
-      });
+      if (/correo:/i.test(text)) {
+        const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/i);
+        if (correoMatch) {
+          actual.correo = correoMatch[0];
+        }
+      }
+
+      if (!/correo:/i.test(text) && !$(el).find("b").length && text.length > 3) {
+        if (!actual.cargo) {
+          actual.cargo = text;
+        }
+      }
     });
+
+    if (Object.keys(actual).length > 0) {
+      directivos.push(actual);
+    }
 
     res.json({ directivos });
   } catch (error) {
@@ -1330,6 +1334,7 @@ app.get("/directorio_biotecnologia_agropecuaria", async (req, res) => {
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
+
 
 
 app.listen(port, () => {
