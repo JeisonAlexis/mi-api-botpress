@@ -1283,6 +1283,7 @@ app.get("/directorio_minero", async (req, res) => {
   }
 });
 
+
 app.get("/directorio_biotecnologia_agropecuaria", async (req, res) => {
   try {
     const url = "https://senabiotecnologia.blogspot.com/p/directorio.html";
@@ -1293,44 +1294,33 @@ app.get("/directorio_biotecnologia_agropecuaria", async (req, res) => {
     });
 
     const $ = cheerio.load(data);
-
     let directivos = [];
 
-
-    $("div").each((i, el) => {
+    $("div, p, span").each((i, el) => {
       const text = $(el).text().replace(/\s+/g, " ").trim();
 
       if (/@sena.edu.co/i.test(text)) {
-
         const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/);
         const correo = correoMatch ? correoMatch[0] : "";
 
         const nombreParte = text.split(correo)[0].trim();
-        const nombre = nombreParte.replace(/Subdirector|Coordinadora?|Académico.*/gi, "").trim();
+        const nombre = nombreParte.replace(/Correo:|Mail:|Email:/gi, "").trim();
 
+        const cargoParte = text.split(correo)[1] || "";
+        const cargo = cargoParte
+          .replace(/Correo:|Mail:|Email:/gi, "")
+          .replace(/\s+/g, " ")
+          .trim();
 
-        const cargoParte = text.replace(nombre, "").replace(correo, "").trim();
-
-        const telefonoMatch = text.match(/PBX:\s*([^)]+)/i);
-        const telefono = telefonoMatch ? telefonoMatch[1].trim() : "";
-
-        directivos.push({
-          nombre,
-          cargo: cargoParte,
-          correo,
-          telefono,
-        });
+        directivos.push({ nombre, cargo, correo });
       }
     });
 
+    directivos = directivos.filter(
+      (d, i, self) => i === self.findIndex((x) => x.correo === d.correo)
+    );
 
-    let imagenes = [];
-    $("div.separator img").each((i, el) => {
-      const src = $(el).attr("src");
-      if (src) imagenes.push(src);
-    });
-
-    res.json({ directivos, imagenes });
+    res.json({ directivos });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener los datos" });
