@@ -1409,7 +1409,6 @@ app.get("/inscripcion_programa_formacion", async (req, res) => {
 
     res.json({
       pasos,
-      total: pasos.length, 
     });
   } catch (error) {
     console.error(error);
