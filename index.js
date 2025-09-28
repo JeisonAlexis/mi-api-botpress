@@ -1318,10 +1318,12 @@ app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
 });
 
 
+
+
 app.get("/como_registrarse", async (req, res) => {
   try {
-    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas"; 
-    const { data } = await axios.get(url, {
+    const url = "https://portal.senasofiaplus.edu.co"; // dominio base real
+    const { data } = await axios.get(`${url}/index.php/ayudas`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
       },
@@ -1330,13 +1332,17 @@ app.get("/como_registrarse", async (req, res) => {
     const $ = cheerio.load(data);
 
     let pasos = [];
-
     const bloque = $("p.tituloboletin:contains('Registrarse en Sofiaplus')");
 
     bloque.nextAll("div.imagens").each((i, el) => {
-      if (i < 7) { 
-        const src = $(el).find("img").attr("src");
-        if (src) pasos.push(src);
+      if (i < 7) {
+        let src = $(el).find("img").attr("src");
+        if (src) {
+          if (src.startsWith("/")) {
+            src = url + src;
+          }
+          pasos.push(src);
+        }
       }
     });
 
