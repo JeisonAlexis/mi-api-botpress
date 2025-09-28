@@ -1322,7 +1322,7 @@ app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
 
 app.get("/como_registrarse", async (req, res) => {
   try {
-    const url = "https://portal.senasofiaplus.edu.co"; // dominio base real
+    const url = "https://portal.senasofiaplus.edu.co"; 
     const { data } = await axios.get(`${url}/index.php/ayudas`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1353,7 +1353,33 @@ app.get("/como_registrarse", async (req, res) => {
   }
 });
 
+app.get("/buscar_programas_formacion", async (req, res) => {
+  try {
+    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas"; 
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
 
+    const $ = cheerio.load(data);
+
+    let pasos = [];
+    $("div.imagens img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) {
+        pasos.push(src);
+      }
+    });
+
+    res.json({
+      pasos,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
+});
 
 
 app.listen(port, () => {
