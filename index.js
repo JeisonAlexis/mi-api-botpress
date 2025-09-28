@@ -1330,19 +1330,23 @@ app.get("/como_registrarse", async (req, res) => {
     const $ = cheerio.load(data);
 
     let pasos = [];
-    $("div.imagens img").each((i, el) => {
-      const src = $(el).attr("src");
-      if (src) pasos.push(src);
+
+    const bloque = $("p.tituloboletin:contains('Registrarse en Sofiaplus')");
+
+    bloque.nextAll("div.imagens").each((i, el) => {
+      if (i < 7) { 
+        const src = $(el).find("img").attr("src");
+        if (src) pasos.push(src);
+      }
     });
 
-    res.json({
-      pasos, 
-    });
+    res.json({ pasos });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
+
 
 
 
