@@ -1448,6 +1448,37 @@ app.get("/guia_actualizar_datos", async (req, res) => {
 });
 
 
+app.get("/cambio_contrasena", async (req, res) => {
+  try {
+    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas";
+    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let pasos = [];
+    $("div.imagens img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src && src.includes("cambio_de_contrasena")) {
+        const fullUrl = src.startsWith("http") ? src : baseUrl + src;
+        pasos.push(fullUrl);
+      }
+    });
+
+    res.json({
+      pasos,
+      total: pasos.length, 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
+});
 
 
 app.listen(port, () => {
