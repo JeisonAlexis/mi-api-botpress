@@ -1356,6 +1356,8 @@ app.get("/como_registrarse", async (req, res) => {
 app.get("/buscar_programas_formacion", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas"; 
+    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1368,7 +1370,8 @@ app.get("/buscar_programas_formacion", async (req, res) => {
     $("div.imagens img").each((i, el) => {
       const src = $(el).attr("src");
       if (src && src.includes("1_buscarprograma")) {
-        pasos.push(src);
+        const fullUrl = src.startsWith("http") ? src : baseUrl + src;
+        pasos.push(fullUrl);
       }
     });
 
@@ -1380,6 +1383,7 @@ app.get("/buscar_programas_formacion", async (req, res) => {
     res.status(500).json({ error: "Error al obtener las imágenes" });
   }
 });
+
 
 
 
