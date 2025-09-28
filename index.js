@@ -1472,7 +1472,6 @@ app.get("/cambio_contrasena", async (req, res) => {
 
     res.json({
       pasos,
-      total: pasos.length, 
     });
   } catch (error) {
     console.error(error);
