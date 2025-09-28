@@ -1317,6 +1317,7 @@ app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
   }
 });
 
+
 app.get("/como_registrarse", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas"; 
@@ -1328,20 +1329,13 @@ app.get("/como_registrarse", async (req, res) => {
 
     const $ = cheerio.load(data);
 
-    const titulo = $("p.tituloboletin").text().trim();
-    const subtitulo = $("p.subtituloboletin").text().trim();
-
-    let imagenes = [];
+    let pasos = [];
     $("div.imagens img").each((i, el) => {
       const src = $(el).attr("src");
-      if (src) imagenes.push(src);
+      if (src) pasos.push(src);
     });
 
-    res.json({
-      titulo,
-      subtitulo,
-      pasos: imagenes, 
-    });
+    res.json({ pasos });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener los datos" });
