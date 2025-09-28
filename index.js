@@ -1367,7 +1367,7 @@ app.get("/buscar_programas_formacion", async (req, res) => {
     let pasos = [];
     $("div.imagens img").each((i, el) => {
       const src = $(el).attr("src");
-      if (src) {
+      if (src && src.includes("1_buscarprograma")) {
         pasos.push(src);
       }
     });
@@ -1380,6 +1380,7 @@ app.get("/buscar_programas_formacion", async (req, res) => {
     res.status(500).json({ error: "Error al obtener las imágenes" });
   }
 });
+
 
 
 app.listen(port, () => {
