@@ -1335,7 +1335,9 @@ app.get("/como_registrarse", async (req, res) => {
       if (src) pasos.push(src);
     });
 
-    res.json({ pasos });
+    res.json({
+      pasos, 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener los datos" });
