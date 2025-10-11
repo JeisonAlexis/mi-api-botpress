@@ -1528,8 +1528,7 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     const regex01 = /\/images\/instructivo\/01\/img-[\d-]+\.jpg$/i;
 
     $('img').each((i, el) => {
-      if (imagenes.length >= 17) return false; 
-
+      if (imagenes.length >= 18) return false; 
       let src =
         $(el).attr('src') ||
         $(el).attr('data-src') ||
@@ -1573,10 +1572,11 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
       fuente: url,
     });
   } catch (error) {
-    console.error("scrape error:", error && error.message ? error.message : error);
-    res.status(500).json({ error: "Error al obtener las imágenes del instructivoo" });
+    console.error("scrape error:", error?.message || error);
+    res.status(500).json({ error: "Error al obtener las imágenes del instructivo" });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
