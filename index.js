@@ -1512,7 +1512,9 @@ app.get("/consultar_resultados_pruebas", async (req, res) => {
 
 app.get("/inscripcion_programa_titulado", async (req, res) => {
   try {
-    const url = "https://portal.senasofiaplus.edu.co/index.php?option=com_content&view=article&layout=edit&id=683"; 
+    const url =
+      "https://portal.senasofiaplus.edu.co/index.php?option=com_content&view=article&layout=edit&id=683";
+
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1529,31 +1531,41 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
       const tag = $(el).prop("tagName").toLowerCase();
 
       if (tag === "p") {
-        const texto = $(el).text().trim();
+        const texto = $(el).text().replace(/\s+/g, " ").trim();
 
         if (texto.match(/^\d+\./) || texto.includes("Ingrese a")) {
-          if (pasoActual) pasos.push(pasoActual); 
+          if (pasoActual) pasos.push(pasoActual);
+
           pasoActual = {
             paso: contador++,
             descripcion: texto,
             imagen: "",
           };
-        } else if (pasoActual) {
+        } else if (pasoActual && texto) {
           pasoActual.descripcion += " " + texto;
         }
-      } else if (tag === "div" && $(el).find("img").length > 0) {
+      }
+
+      else if (tag === "div" && $(el).find("img").length > 0) {
         const imgSrc = $(el).find("img").attr("src");
+
         if (imgSrc && pasoActual) {
-          pasoActual.imagen = imgSrc;
+          const fullUrl = imgSrc.startsWith("http")
+            ? imgSrc
+            : `https://portal.senasofiaplus.edu.co${imgSrc}`;
+
+          pasoActual.imagen = fullUrl;
         }
       }
     });
 
-    if (pasoActual) pasos.push(pasoActual); 
+    if (pasoActual) pasos.push(pasoActual);
+
+    pasos = pasos.filter((p) => p.descripcion && p.descripcion.length > 20).slice(0, 6);
 
     res.json({ pasos });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error:", error.message);
     res.status(500).json({ error: "Error al obtener los datos del instructivo" });
   }
 });
