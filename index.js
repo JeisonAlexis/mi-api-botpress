@@ -1552,7 +1552,7 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
       }
     });
 
-    if (imagenes.length < 17) {
+    if (imagenes.length < 18) {
       $('div.imagens img').each((i, el) => {
         if (imagenes.length >= 17) return false;
         let src = $(el).attr('src') || $(el).attr('data-src') || '';
