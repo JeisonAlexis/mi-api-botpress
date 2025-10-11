@@ -1574,7 +1574,7 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     });
   } catch (error) {
     console.error("scrape error:", error && error.message ? error.message : error);
-    res.status(500).json({ error: "Error al obtener las imágenes del instructivo" });
+    res.status(500).json({ error: "Error al obtener las imágenes del instructivoo" });
   }
 });
 
