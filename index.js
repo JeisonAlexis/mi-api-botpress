@@ -1581,38 +1581,43 @@ app.get("/roles_sena", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas/rol";
     const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
     });
 
     const $ = cheerio.load(data);
-
     let roles = [];
 
-    $("#contenido1 p a").each((i, el) => {
-      const titulo = $(el).text().trim(); 
-      const enlace = $(el).attr("href") || ""; 
+    for (let i = 1; i <= 17; i++) {
+      const selector = `#contenido${i} p a`;
+      $(selector).each((_, el) => {
+        const rol = $(el).text().trim();
+        const href = $(el).attr("href");
 
-      roles.push({
-        rol: titulo,
-        url: enlace.startsWith("http") ? enlace : null, 
+        if (href && href.startsWith("https://")) {
+          roles.push({
+            rol,
+            url: href,
+          });
+        }
       });
-    });
+    }
 
-    let imagenes = [];
-    $("img").each((i, el) => {
-      const src = $(el).attr("src");
-      if (src) imagenes.push(src);
-    });
+    const unicos = [];
+    const urls = new Set();
+    for (const r of roles) {
+      if (!urls.has(r.url)) {
+        urls.add(r.url);
+        unicos.push(r);
+      }
+    }
 
     res.json({
       fuente: url,
-      roles,
-      imagenes,
+      cantidad: unicos.length,
+      roles: unicos,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error al obtener roles del SENA:", error);
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
