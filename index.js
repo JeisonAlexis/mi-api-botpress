@@ -1577,6 +1577,45 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
   }
 });
 
+app.get("/roles_sena", async (req, res) => {
+  try {
+    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas/rol/70-descripcion-roles";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let roles = [];
+
+    $("#contenido1 p a").each((i, el) => {
+      const titulo = $(el).text().trim(); 
+      const enlace = $(el).attr("href") || ""; 
+
+      roles.push({
+        rol: titulo,
+        url: enlace.startsWith("http") ? enlace : null, 
+      });
+    });
+
+    let imagenes = [];
+    $("img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) imagenes.push(src);
+    });
+
+    res.json({
+      fuente: url,
+      roles,
+      imagenes,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
