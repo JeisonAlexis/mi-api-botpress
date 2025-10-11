@@ -1510,11 +1510,10 @@ app.get("/consultar_resultados_pruebas", async (req, res) => {
   }
 });
 
-app.get("/inscripcion_programa_titulado", async (req, res) => {
+app.get("/instructivo_formacion_virtual", async (req, res) => {
   try {
     const url =
-      "https://portal.senasofiaplus.edu.co/index.php?option=com_content&view=article&layout=edit&id=683";
-
+      "https://portal.senasofiaplus.edu.co/index.php/instructivo-inscripcion";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1526,49 +1525,68 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     let pasos = [];
     let pasoActual = null;
     let contador = 1;
+    let finalizar = false;
 
     $("p, div.imagens").each((i, el) => {
+      if (finalizar) return;
+
       const tag = $(el).prop("tagName").toLowerCase();
 
       if (tag === "p") {
-        const texto = $(el).text().replace(/\s+/g, " ").trim();
+        const texto = $(el).text().trim();
 
-        if (texto.match(/^\d+\./) || texto.includes("Ingrese a")) {
-          if (pasoActual) pasos.push(pasoActual);
-
+        if (
+          texto.includes(
+            "Por último aparece la ventana de confirmación de inscripción al programa de formación virtual"
+          )
+        ) {
           pasoActual = {
             paso: contador++,
             descripcion: texto,
             imagen: "",
           };
-        } else if (pasoActual && texto) {
+          pasos.push(pasoActual);
+          finalizar = true;
+          return;
+        }
+
+        if (texto.match(/^\d+\./) || texto.startsWith("1. ")) {
+          if (pasoActual) pasos.push(pasoActual);
+          pasoActual = {
+            paso: contador++,
+            descripcion: texto,
+            imagen: "",
+          };
+        } else if (pasoActual) {
           pasoActual.descripcion += " " + texto;
         }
       }
 
-      else if (tag === "div" && $(el).find("img").length > 0) {
+      if (tag === "div" && $(el).find("img").length > 0 && pasoActual) {
         const imgSrc = $(el).find("img").attr("src");
-
-        if (imgSrc && pasoActual) {
-          const fullUrl = imgSrc.startsWith("http")
-            ? imgSrc
-            : `https://portal.senasofiaplus.edu.co${imgSrc}`;
-
-          pasoActual.imagen = fullUrl;
+        if (imgSrc) {
+          pasoActual.imagen = imgSrc;
         }
       }
     });
 
-    if (pasoActual) pasos.push(pasoActual);
+    if (pasoActual && !finalizar) pasos.push(pasoActual);
 
-    pasos = pasos.filter((p) => p.descripcion && p.descripcion.length > 20).slice(0, 6);
+    pasos = pasos.filter(
+      (p) =>
+        !p.descripcion.includes("Cargar Documentos") &&
+        !p.descripcion.includes("Roles que se ven afectados: Aspirante.")
+    );
 
     res.json({ pasos });
   } catch (error) {
-    console.error("❌ Error:", error.message);
-    res.status(500).json({ error: "Error al obtener los datos del instructivo" });
+    console.error(error);
+    res.status(500).json({
+      error: "Error al obtener los pasos de inscripción del instructivo",
+    });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
