@@ -1510,6 +1510,53 @@ app.get("/consultar_resultados_pruebas", async (req, res) => {
   }
 });
 
+app.get("/inscripcion_programa_titulado", async (req, res) => {
+  try {
+    const url = "https://portal.senasofiaplus.edu.co/index.php?option=com_content&view=article&layout=edit&id=683"; 
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let pasos = [];
+    let pasoActual = null;
+    let contador = 1;
+
+    $("p, div.imagens").each((i, el) => {
+      const tag = $(el).prop("tagName").toLowerCase();
+
+      if (tag === "p") {
+        const texto = $(el).text().trim();
+
+        if (texto.match(/^\d+\./) || texto.includes("Ingrese a")) {
+          if (pasoActual) pasos.push(pasoActual); 
+          pasoActual = {
+            paso: contador++,
+            descripcion: texto,
+            imagen: "",
+          };
+        } else if (pasoActual) {
+          pasoActual.descripcion += " " + texto;
+        }
+      } else if (tag === "div" && $(el).find("img").length > 0) {
+        const imgSrc = $(el).find("img").attr("src");
+        if (imgSrc && pasoActual) {
+          pasoActual.imagen = imgSrc;
+        }
+      }
+    });
+
+    if (pasoActual) pasos.push(pasoActual); 
+
+    res.json({ pasos });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los datos del instructivo" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
