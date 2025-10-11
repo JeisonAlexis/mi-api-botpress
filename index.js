@@ -1510,7 +1510,7 @@ app.get("/consultar_resultados_pruebas", async (req, res) => {
   }
 });
 
-app.get("/instructivo_formacion_virtual", async (req, res) => {
+app.get("/inscripcion_programa_titulado", async (req, res) => {
   try {
     const url =
       "https://portal.senasofiaplus.edu.co/index.php/instructivo-inscripcion";
