@@ -1513,7 +1513,7 @@ app.get("/consultar_resultados_pruebas", async (req, res) => {
 app.get("/inscripcion_programa_titulado", async (req, res) => {
   try {
     const url =
-      "https://portal.senasofiaplus.edu.co/index.php/instructivo-inscripcion";
+      "https://portal.senasofiaplus.edu.co/index.php?option=com_content&view=article&layout=edit&id=683";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
