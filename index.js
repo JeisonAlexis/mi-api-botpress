@@ -1522,87 +1522,43 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
 
     const $ = cheerio.load(data);
 
-    let pasos = [];
-    let pasoActual = null;
-    let contador = 1;
-    let finalizar = false;
+    const contenido = [];
 
-    $("p, div.imagens").each((i, el) => {
-      if (finalizar) return;
-
+    $("p, div.imagens, hr, h1, h2, h3, h4, h5, h6, strong, em, ul, ol, li").each((i, el) => {
       const tag = $(el).prop("tagName").toLowerCase();
-      const texto = tag === "p" ? $(el).text().trim() : "";
-      const imgs = $(el).find("img");
 
-      if (
-        texto.includes(
-          "Por último aparece la ventana de confirmación de inscripción al programa de formación virtual"
-        )
-      ) {
-        if (pasoActual) pasos.push(pasoActual);
-        pasoActual = {
-          paso: contador++,
-          descripcion: texto,
-          imagenes: [],
-        };
-
-        imgs.each((_, img) => {
-          let src = $(img).attr("src");
-          if (src && src.startsWith("/"))
-            src = "https://portal.senasofiaplus.edu.co" + src;
-          pasoActual.imagenes.push(src);
-        });
-
-        pasos.push(pasoActual);
-        finalizar = true;
-        return;
+      if (tag === "div" && $(el).hasClass("imagens")) {
+        $(el)
+          .find("img")
+          .each((_, img) => {
+            let src = $(img).attr("src");
+            if (src && src.startsWith("/"))
+              src = "https://portal.senasofiaplus.edu.co" + src;
+            contenido.push({ tipo: "imagen", src });
+          });
       }
 
-      if (texto.match(/^\d+\./)) {
-        if (pasoActual) pasos.push(pasoActual);
-        pasoActual = {
-          paso: contador++,
-          descripcion: texto,
-          imagenes: [],
-        };
-      } else if (texto && pasoActual) {
-        pasoActual.descripcion += " " + texto;
+      else if (["p", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "li"].includes(tag)) {
+        const texto = $(el).text().trim();
+        if (texto) {
+          contenido.push({ tipo: "texto", valor: texto });
+        }
       }
 
-      if (imgs.length > 0) {
-        imgs.each((_, img) => {
-          let src = $(img).attr("src");
-          if (src && src.startsWith("/"))
-            src = "https://portal.senasofiaplus.edu.co" + src;
-          if (pasoActual) {
-            pasoActual.imagenes.push(src);
-          } else {
-            pasoActual = {
-              paso: contador++,
-              descripcion: "",
-              imagenes: [src],
-            };
-          }
-        });
+      else if (tag === "hr") {
+        contenido.push({ tipo: "separador" });
       }
     });
 
-    if (pasoActual && !finalizar) pasos.push(pasoActual);
-
-    pasos = pasos.filter(
-      (p) =>
-        !p.descripcion.includes("Cargar Documentos") &&
-        !p.descripcion.includes("Roles que se ven afectados: Aspirante.")
-    );
-
-    res.json({ pasos });
+    res.json({ contenido });
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      error: "Error al obtener los pasos de inscripción del instructivo",
+      error: "Error al obtener el contenido completo del instructivo",
     });
   }
 });
+
 
 
 
