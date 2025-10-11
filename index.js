@@ -1579,7 +1579,7 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
 
 app.get("/roles_sena", async (req, res) => {
   try {
-    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas/rol/70-descripcion-roles";
+    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas/rol";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
