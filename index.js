@@ -1618,7 +1618,7 @@ app.get("/roles_sena", async (req, res) => {
     });
   } catch (error) {
     console.error("Error al obtener roles del SENA:", error);
-    res.status(500).json({ error: "Error al obtener los datos" });
+    res.status(500).json({ error: "Error al obtener los datoss" });
   }
 });
 
