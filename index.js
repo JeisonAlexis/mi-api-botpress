@@ -1514,6 +1514,8 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
   try {
     const url =
       "https://portal.senasofiaplus.edu.co/index.php?option=com_content&view=article&layout=edit&id=683";
+    const baseUrl = "https://portal.senasofiaplus.edu.co";
+
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1522,45 +1524,28 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
 
     const $ = cheerio.load(data);
 
-    const contenido = [];
+    let imagenes = [];
 
-    $("p, div.imagens, hr, h1, h2, h3, h4, h5, h6, strong, em, ul, ol, li").each((i, el) => {
-      const tag = $(el).prop("tagName").toLowerCase();
-
-      if (tag === "div" && $(el).hasClass("imagens")) {
-        $(el)
-          .find("img")
-          .each((_, img) => {
-            let src = $(img).attr("src");
-            if (src && src.startsWith("/"))
-              src = "https://portal.senasofiaplus.edu.co" + src;
-            contenido.push({ tipo: "imagen", src });
-          });
-      }
-
-      else if (["p", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "li"].includes(tag)) {
-        const texto = $(el).text().trim();
-        if (texto) {
-          contenido.push({ tipo: "texto", valor: texto });
-        }
-      }
-
-      else if (tag === "hr") {
-        contenido.push({ tipo: "separador" });
+    // Buscar todas las imágenes dentro de los div con clase "imagens"
+    $("div.imagens img").each((i, el) => {
+      let src = $(el).attr("src");
+      if (src) {
+        if (src.startsWith("/")) src = baseUrl + src;
+        imagenes.push(src);
       }
     });
 
-    res.json({ contenido });
+    res.json({
+      imagenes,
+      fuente: url,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      error: "Error al obtener el contenido completo del instructivo",
+      error: "Error al obtener las imágenes del instructivo",
     });
   }
 });
-
-
-
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
