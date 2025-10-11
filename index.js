@@ -1527,40 +1527,46 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     let contador = 1;
     let finalizar = false;
 
-    $("p, div").each((i, el) => {
+    $("p, div.imagens").each((i, el) => {
       if (finalizar) return;
 
       const tag = $(el).prop("tagName").toLowerCase();
-      const texto = $(el).text().trim();
-      const imagen = $(el).find("img").attr("src");
 
-      if (
-        texto.includes(
-          "Por último aparece la ventana de confirmación de inscripción al programa de formación virtual"
-        )
-      ) {
-        pasoActual = {
-          paso: contador++,
-          descripcion: texto,
-          imagen: imagen || "",
-        };
-        pasos.push(pasoActual);
-        finalizar = true;
-        return;
+      if (tag === "p") {
+        const texto = $(el).text().trim();
+
+        if (
+          texto.includes(
+            "Por último aparece la ventana de confirmación de inscripción al programa de formación virtual"
+          )
+        ) {
+          pasoActual = {
+            paso: contador++,
+            descripcion: texto,
+            imagen: "",
+          };
+          pasos.push(pasoActual);
+          finalizar = true;
+          return;
+        }
+
+        if (texto.match(/^\d+\./) || texto.startsWith("1. ")) {
+          if (pasoActual) pasos.push(pasoActual);
+          pasoActual = {
+            paso: contador++,
+            descripcion: texto,
+            imagen: "",
+          };
+        } else if (pasoActual) {
+          pasoActual.descripcion += " " + texto;
+        }
       }
 
-      if (texto.match(/^\d+\./)) {
-        if (pasoActual) pasos.push(pasoActual);
-        pasoActual = {
-          paso: contador++,
-          descripcion: texto,
-          imagen: imagen || "",
-        };
-      } else if (texto.length > 0 && pasoActual) {
-        pasoActual.descripcion += " " + texto;
-        if (imagen && !pasoActual.imagen) pasoActual.imagen = imagen;
-      } else if (imagen && pasoActual && !pasoActual.imagen) {
-        pasoActual.imagen = imagen;
+      if (tag === "div" && $(el).find("img").length > 0 && pasoActual) {
+        const imgSrc = $(el).find("img").attr("src");
+        if (imgSrc) {
+          pasoActual.imagen = imgSrc;
+        }
       }
     });
 
@@ -1572,13 +1578,6 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
         !p.descripcion.includes("Roles que se ven afectados: Aspirante.")
     );
 
-    pasos = pasos.map((p) => {
-      if (p.imagen && p.imagen.startsWith("/")) {
-        p.imagen = "https://portal.senasofiaplus.edu.co" + p.imagen;
-      }
-      return p;
-    });
-
     res.json({ pasos });
   } catch (error) {
     console.error(error);
@@ -1587,7 +1586,6 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     });
   }
 });
-
 
 
 app.listen(port, () => {
