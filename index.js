@@ -1531,42 +1531,59 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
       if (finalizar) return;
 
       const tag = $(el).prop("tagName").toLowerCase();
+      const texto = tag === "p" ? $(el).text().trim() : "";
+      const imgs = $(el).find("img");
 
-      if (tag === "p") {
-        const texto = $(el).text().trim();
+      if (
+        texto.includes(
+          "Por último aparece la ventana de confirmación de inscripción al programa de formación virtual"
+        )
+      ) {
+        if (pasoActual) pasos.push(pasoActual);
+        pasoActual = {
+          paso: contador++,
+          descripcion: texto,
+          imagenes: [],
+        };
 
-        if (
-          texto.includes(
-            "Por último aparece la ventana de confirmación de inscripción al programa de formación virtual"
-          )
-        ) {
-          pasoActual = {
-            paso: contador++,
-            descripcion: texto,
-            imagen: "",
-          };
-          pasos.push(pasoActual);
-          finalizar = true;
-          return;
-        }
+        imgs.each((_, img) => {
+          let src = $(img).attr("src");
+          if (src && src.startsWith("/"))
+            src = "https://portal.senasofiaplus.edu.co" + src;
+          pasoActual.imagenes.push(src);
+        });
 
-        if (texto.match(/^\d+\./) || texto.startsWith("1. ")) {
-          if (pasoActual) pasos.push(pasoActual);
-          pasoActual = {
-            paso: contador++,
-            descripcion: texto,
-            imagen: "",
-          };
-        } else if (pasoActual) {
-          pasoActual.descripcion += " " + texto;
-        }
+        pasos.push(pasoActual);
+        finalizar = true;
+        return;
       }
 
-      if (tag === "div" && $(el).find("img").length > 0 && pasoActual) {
-        const imgSrc = $(el).find("img").attr("src");
-        if (imgSrc) {
-          pasoActual.imagen = imgSrc;
-        }
+      if (texto.match(/^\d+\./)) {
+        if (pasoActual) pasos.push(pasoActual);
+        pasoActual = {
+          paso: contador++,
+          descripcion: texto,
+          imagenes: [],
+        };
+      } else if (texto && pasoActual) {
+        pasoActual.descripcion += " " + texto;
+      }
+
+      if (imgs.length > 0) {
+        imgs.each((_, img) => {
+          let src = $(img).attr("src");
+          if (src && src.startsWith("/"))
+            src = "https://portal.senasofiaplus.edu.co" + src;
+          if (pasoActual) {
+            pasoActual.imagenes.push(src);
+          } else {
+            pasoActual = {
+              paso: contador++,
+              descripcion: "",
+              imagenes: [src],
+            };
+          }
+        });
       }
     });
 
@@ -1586,6 +1603,7 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     });
   }
 });
+
 
 
 app.listen(port, () => {
