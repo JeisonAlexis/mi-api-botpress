@@ -1517,33 +1517,64 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     const baseUrl = "https://portal.senasofiaplus.edu.co";
 
     const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
+      timeout: 15000,
     });
 
     const $ = cheerio.load(data);
 
-    let imagenes = [];
+    const imagenes = [];
+    const seen = new Set();
+    const regex01 = /\/images\/instructivo\/01\/img-[\d-]+\.jpg$/i;
 
-    // Buscar todas las imágenes dentro de los div con clase "imagens"
-    $("div.imagens img").each((i, el) => {
-      let src = $(el).attr("src");
-      if (src) {
-        if (src.startsWith("/")) src = baseUrl + src;
-        imagenes.push(src);
+    $('img').each((i, el) => {
+      if (imagenes.length >= 17) return false; 
+
+      let src =
+        $(el).attr('src') ||
+        $(el).attr('data-src') ||
+        $(el).attr('data-lazy') ||
+        (($(el).attr('srcset') || '').split(',')[0] || '').split(' ')[0];
+
+      if (!src) return;
+
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = baseUrl + src;
+      if (!/^https?:\/\//i.test(src)) src = baseUrl + '/' + src;
+
+      const clean = src.split('?')[0];
+
+      if (!regex01.test(clean)) return;
+
+      if (!seen.has(clean)) {
+        seen.add(clean);
+        imagenes.push(clean);
       }
     });
+
+    if (imagenes.length < 17) {
+      $('div.imagens img').each((i, el) => {
+        if (imagenes.length >= 17) return false;
+        let src = $(el).attr('src') || $(el).attr('data-src') || '';
+        if (!src) return;
+        if (src.startsWith('//')) src = 'https:' + src;
+        if (src.startsWith('/')) src = baseUrl + src;
+        const clean = src.split('?')[0];
+        if (!regex01.test(clean)) return;
+        if (!seen.has(clean)) {
+          seen.add(clean);
+          imagenes.push(clean);
+        }
+      });
+    }
 
     res.json({
       imagenes,
       fuente: url,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Error al obtener las imágenes del instructivo",
-    });
+    console.error("scrape error:", error && error.message ? error.message : error);
+    res.status(500).json({ error: "Error al obtener las imágenes del instructivo" });
   }
 });
 
