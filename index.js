@@ -1649,6 +1649,38 @@ app.get("/directorio_ambiental_ecoturistico", async (req, res) => {
   }
 });
 
+
+app.get("/directorio_agroforestal_acuícola", async (req, res) => {
+  try {
+    const url = "https://cedeagro.blogspot.com/p/directorio.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    let imagenes = [];
+    $("div.separator img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) {
+        imagenes.push(src);
+      }
+    });
+
+
+    res.json({
+      centro: "Centro Agroforestal y Acuícola Arapaima",
+      total_imagenes: imagenes.length,
+      imagenes,
+    });
+  } catch (error) {
+    console.error("❌ Error al obtener los datos:", error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
