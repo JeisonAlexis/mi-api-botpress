@@ -1650,7 +1650,7 @@ app.get("/directorio_ambiental_ecoturistico", async (req, res) => {
 });
 
 
-app.get("/directorio_agroforestal_acuícola", async (req, res) => {
+app.get("/directorio_agroforestal_acuicola", async (req, res) => {
   try {
     const url = "https://cedeagro.blogspot.com/p/directorio.html";
     const { data } = await axios.get(url, {
