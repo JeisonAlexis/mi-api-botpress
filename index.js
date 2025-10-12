@@ -1645,7 +1645,7 @@ app.get("/directorio_ambiental_ecoturistico", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener los datos" });
+    res.status(500).json({ error: "Error al obtener los datoss" });
   }
 });
 
