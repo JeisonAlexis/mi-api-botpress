@@ -1624,7 +1624,7 @@ app.get("/roles_sena", async (req, res) => {
 
 app.get("/directorio_ambiental_ecoturistico", async (req, res) => {
   try {
-    const url = "https://cedeagro.blogspot.com/p/directorio.html";
+    const url = "https://senaguainia1.blogspot.com/p/directorio.html";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
