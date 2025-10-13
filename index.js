@@ -1714,6 +1714,53 @@ app.get("/directorio_cafec", async (req, res) => {
   }
 });
 
+
+app.get("/directorio_gestion_desarrollo", async (req, res) => {
+  try {
+    const url = "https://araucasena.blogspot.com/p/sede-arauca-direccioncarrera-20-28-163.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+    let directivos = [];
+
+    $("b").each((i, el) => {
+      const cargo = $(el).text().trim();
+
+      const nextText = $(el).parent().next().text().trim();
+
+      if (nextText) {
+        const correoMatch = $(el)
+          .parent()
+          .nextAll()
+          .text()
+          .match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/i);
+        const correo = correoMatch ? correoMatch[0] : "";
+
+        let nombre = nextText.replace(/Correo:.*/i, "").trim();
+
+        nombre = nombre.replace(/\s{2,}/g, " ").replace(/Cel.*/i, "").trim();
+
+        if (correo && nombre) {
+          directivos.push({
+            cargo,
+            nombre,
+            correo,
+          });
+        }
+      }
+    });
+
+    res.json({ directivos });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
