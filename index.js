@@ -1721,42 +1721,42 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
       "https://araucasena.blogspot.com/p/sede-arauca-direccioncarrera-20-28-163.html";
 
     const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
     });
 
     const $ = cheerio.load(data);
+    const textoLimpio = $("body").text().replace(/\s+/g, " ").trim();
 
-    const textoLimpio = $("body")
-      .text()
-      .replace(/\s+/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .trim();
+    const patronCargo = /(SUBDIRECTOR|COORDINADOR(?:A)? [A-ZÁÉÍÓÚÑ\s,\.]+|L[IÍ]DER [A-ZÁÉÍÓÚÑ\s,\.]+|BIENESTAR AL APRENDIZ|CONTRATO DE APRENDIZAJE|SISTEMA DE GESTIÓN DE CALIDAD)/gi;
 
-    const bloques = textoLimpio.split(/(?=Correo:)/i);
+    const coincidencias = [...textoLimpio.matchAll(patronCargo)];
 
     const directivos = [];
 
-    for (let i = 0; i < bloques.length; i++) {
-      const bloque = bloques[i];
+    for (let i = 0; i < coincidencias.length; i++) {
+      const inicio = coincidencias[i].index;
+      const fin =
+        i + 1 < coincidencias.length
+          ? coincidencias[i + 1].index
+          : textoLimpio.length;
 
-      const cargoMatch = bloque.match(
-        /(SUBDIRECTOR|COORDINADOR(?:A)?|L[IÍ]DER|BIENESTAR AL APRENDIZ|CONTRATO DE APRENDIZAJE|SISTEMA DE GESTIÓN DE CALIDAD)/i
-      );
-      const cargo = cargoMatch ? cargoMatch[0].trim().toUpperCase() : null;
+      const bloque = textoLimpio.slice(inicio, fin).trim();
+
+      const cargo = coincidencias[i][0]
+        .replace(/\s+/g, " ")
+        .replace(/\.$/, "")
+        .trim();
 
       const nombreMatch = bloque.match(
-        /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,3})/
+        /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,4})/
       );
+      const correoMatch = bloque.match(/[A-Za-z0-9._%+-]+@[\w.-]+\.\w+/);
+      const celularMatch = bloque.match(/\b3\d{2}\s*\d{3}\s*\d{4}\b/);
+
       const nombre = nombreMatch ? nombreMatch[0].trim() : null;
-
-      const correoMatch = bloque.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/);
-      const correo = correoMatch ? correoMatch[0] : null;
-
-      const celularMatch = bloque.match(/\b3\d{2}\s*\d{3}\s*\d{4}\b/g);
+      const correo = correoMatch ? correoMatch[0].trim() : null;
       const celular = celularMatch
-        ? celularMatch[celularMatch.length - 1].replace(/\s+/g, "")
+        ? celularMatch[0].replace(/\s+/g, "")
         : null;
 
       if (cargo && nombre && correo && celular) {
