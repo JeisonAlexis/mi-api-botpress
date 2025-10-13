@@ -1776,39 +1776,31 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
   }
 });
 
+
 app.get("/directorio_asistencia_tecnica", async (req, res) => {
   try {
     const url = "https://centroastinsena.blogspot.com/p/directorio.html";
+
     const { data } = await axios.get(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
     });
 
     const $ = cheerio.load(data);
-    const directivos = [];
 
-    $("h3").each((i, el) => {
-      const cargo = $(el).text().trim();
-
-      const text = $(el).nextAll("div").text().replace(/\s+/g, " ").trim();
-
-      const nombreMatch = text.match(/Nombre:\s*([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/);
-      const correoMatch = text.match(/Correo:\s*([\w.-]+@[A-Za-z.-]+)/);
-      const telefonoMatch = text.match(/Tel[eé]fono:\s*([\d\s-]+)/);
-
-      if (nombreMatch || correoMatch || telefonoMatch) {
-        directivos.push({
-          cargo,
-          nombre: nombreMatch ? nombreMatch[1].trim() : "",
-          correo: correoMatch ? correoMatch[1].trim() : "",
-          telefono: telefonoMatch ? telefonoMatch[1].trim() : "",
-        });
-      }
+    const imagenes = [];
+    $("div.separator img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src) imagenes.push(src);
     });
 
-    res.json(directivos);
+    const soloDos = imagenes.slice(0, 2);
+
+    res.json({ imagenes: soloDos });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al obtener los datos" });
+    console.error("Error al obtener imágenes:", error.message);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
   }
 });
 
