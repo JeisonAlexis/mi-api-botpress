@@ -1710,7 +1710,7 @@ app.get("/directorio_cafec", async (req, res) => {
     res.json(directivos);
   } catch (error) {
     console.error("Error al obtener el directorio:", error);
-    res.status(500).json({ error: "Error al obtener los datos" });
+    res.status(500).json({ error: "Error al obtener los datoss" });
   }
 });
 
