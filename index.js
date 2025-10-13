@@ -1717,7 +1717,9 @@ app.get("/directorio_cafec", async (req, res) => {
 
 app.get("/directorio_gestion_desarrollo", async (req, res) => {
   try {
-    const url = "https://araucasena.blogspot.com/p/sede-arauca-direccioncarrera-20-28-163.html";
+    const url =
+      "https://araucasena.blogspot.com/p/sede-arauca-direccioncarrera-20-28-163.html";
+
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1725,25 +1727,39 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
     });
 
     const $ = cheerio.load(data);
-    let directivos = [];
 
-    $("b").each((i, el) => {
-      const cargo = $(el).text().trim();
-      if (!cargo) return;
+    const textoLimpio = $("body")
+      .text()
+      .replace(/\s+/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .trim();
 
-      const nextDiv = $(el).closest("div").nextAll("div").slice(0, 5).text();
-      const text = (nextDiv || "").replace(/\s+/g, " ").trim();
+    const bloques = textoLimpio.split(/(?=Correo:)/i);
 
-      const nombreMatch = text.match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+\s*[A-ZÁÉÍÓÚÑa-záéíóúñ]*)/);
-      const nombre = nombreMatch ? nombreMatch[1].trim() : "";
+    const directivos = [];
 
-      const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/);
-      const correo = correoMatch ? correoMatch[0] : "";
+    for (let i = 0; i < bloques.length; i++) {
+      const bloque = bloques[i];
 
-      const celularMatch = text.match(/\b3\d{9}\b/);
-      const celular = celularMatch ? celularMatch[0] : "";
+      const cargoMatch = bloque.match(
+        /(SUBDIRECTOR|COORDINADOR(?:A)?|L[IÍ]DER|BIENESTAR AL APRENDIZ|CONTRATO DE APRENDIZAJE|SISTEMA DE GESTIÓN DE CALIDAD)/i
+      );
+      const cargo = cargoMatch ? cargoMatch[0].trim().toUpperCase() : null;
 
-      if (nombre && correo && celular) {
+      const nombreMatch = bloque.match(
+        /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,3})/
+      );
+      const nombre = nombreMatch ? nombreMatch[0].trim() : null;
+
+      const correoMatch = bloque.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/);
+      const correo = correoMatch ? correoMatch[0] : null;
+
+      const celularMatch = bloque.match(/\b3\d{2}\s*\d{3}\s*\d{4}\b/g);
+      const celular = celularMatch
+        ? celularMatch[celularMatch.length - 1].replace(/\s+/g, "")
+        : null;
+
+      if (cargo && nombre && correo && celular) {
         directivos.push({
           cargo,
           nombre,
@@ -1751,11 +1767,11 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
           celular,
         });
       }
-    });
+    }
 
     res.json(directivos);
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error al obtener los datos:", error.message);
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
