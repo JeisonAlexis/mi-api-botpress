@@ -1681,6 +1681,39 @@ app.get("/directorio_agroforestal_acuicola", async (req, res) => {
   }
 });
 
+app.get("/directorio_cafec", async (req, res) => {
+  try {
+    const url = "https://senacasanare.blogspot.com/p/directorio.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+    const directivos = [];
+
+    $("div.MsoNormal b").each((i, el) => {
+      const cargo = $(el).text().trim();
+      const nombre = $(el).parent().next().text().trim();
+      const correo = $(el).parent().next().next().text().trim();
+
+      if (correo.includes("@sena.edu.co")) {
+        directivos.push({
+          cargo,
+          nombre,
+          correo,
+        });
+      }
+    });
+
+    res.json(directivos);
+  } catch (error) {
+    console.error("Error al obtener el directorio:", error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
