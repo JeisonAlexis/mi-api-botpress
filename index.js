@@ -1729,37 +1729,37 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
 
     $("b").each((i, el) => {
       const cargo = $(el).text().trim();
+      if (!cargo) return;
 
-      const nextText = $(el).parent().next().text().trim();
+      const nextDiv = $(el).closest("div").nextAll("div").slice(0, 5).text();
+      const text = (nextDiv || "").replace(/\s+/g, " ").trim();
 
-      if (nextText) {
-        const correoMatch = $(el)
-          .parent()
-          .nextAll()
-          .text()
-          .match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/i);
-        const correo = correoMatch ? correoMatch[0] : "";
+      const nombreMatch = text.match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+\s*[A-ZÁÉÍÓÚÑa-záéíóúñ]*)/);
+      const nombre = nombreMatch ? nombreMatch[1].trim() : "";
 
-        let nombre = nextText.replace(/Correo:.*/i, "").trim();
+      const correoMatch = text.match(/[A-Za-z0-9._%+-]+@sena\.edu\.co/);
+      const correo = correoMatch ? correoMatch[0] : "";
 
-        nombre = nombre.replace(/\s{2,}/g, " ").replace(/Cel.*/i, "").trim();
+      const celularMatch = text.match(/\b3\d{9}\b/);
+      const celular = celularMatch ? celularMatch[0] : "";
 
-        if (correo && nombre) {
-          directivos.push({
-            cargo,
-            nombre,
-            correo,
-          });
-        }
+      if (nombre && correo && celular) {
+        directivos.push({
+          cargo,
+          nombre,
+          correo,
+          celular,
+        });
       }
     });
 
-    res.json({ directivos });
+    res.json(directivos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
