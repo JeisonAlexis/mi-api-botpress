@@ -1804,6 +1804,46 @@ app.get("/directorio_asistencia_tecnica", async (req, res) => {
   }
 });
 
+app.get("/directorio_sector_agropecuario", async (req, res) => {
+  try {
+    const url = "https://caisarisaralda.blogspot.com/p/directorio.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+    let directivos = [];
+
+    $("p").each((i, el) => {
+      const cargo = $(el).find("b").first().text().trim();
+      const nombre = $(el).find("b").eq(1).text().trim();
+
+      const text = $(el).text();
+
+      const telefonoMatch = text.match(/Teléfono:\s*([^\n<]+)/i);
+      const direccionMatch = text.match(/Dirección:\s*([^\n<]+)/i);
+      const horarioMatch = text.match(/Horario de atención:\s*([^\n<]+)/i);
+
+      if (cargo && nombre) {
+        directivos.push({
+          cargo,
+          nombre,
+          telefono: telefonoMatch ? telefonoMatch[1].trim() : "",
+          direccion: direccionMatch ? direccionMatch[1].trim() : "",
+          horario: horarioMatch ? horarioMatch[1].trim() : "",
+        });
+      }
+    });
+
+    res.json(directivos);
+  } catch (error) {
+    console.error("Error al obtener los datos:", error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
