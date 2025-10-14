@@ -1850,6 +1850,60 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
   }
 });
 
+app.get("/directorio_regional_risaralda", async (req, res) => {
+  try {
+    const url = "https://comerciorisaralda.blogspot.com/p/direccion-regional.html";
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+      },
+    });
+
+    const $ = cheerio.load(data);
+    let directivos = [];
+
+    $("h3.post-title.entry-title").each((i, el) => {
+      const cargo = $(el).text().trim();
+
+      const nombre = $(el)
+        .nextAll("div.post-body")
+        .find("p")
+        .first()
+        .text()
+        .trim();
+
+      const imagen = $(el)
+        .nextAll("div.post-body")
+        .find("div.separator img")
+        .attr("src") || "";
+
+      let descripcion = "";
+      $(el)
+        .nextAll("div.post-body")
+        .find("p")
+        .each((j, p) => {
+          const text = $(p).text().trim();
+          if (text && text.length > 50) {
+            descripcion = text; 
+          }
+        });
+
+      if (nombre && cargo) {
+        directivos.push({
+          cargo,
+          nombre,
+          imagen,
+          descripcion,
+        });
+      }
+    });
+
+    res.json({ directivos });
+  } catch (error) {
+    console.error("❌ Error al obtener los datos:", error);
+    res.status(500).json({ error: "Error al obtener los datos" });
+  }
+});
 
 
 
