@@ -1816,11 +1816,18 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
     const $ = cheerio.load(data);
     let directivos = [];
 
-    $("p").each((i, el) => {
-      const cargo = $(el).find("b").first().text().trim();
-      const nombre = $(el).find("b").eq(1).text().trim();
+    $('b[style*="#238276"]').each((i, el) => {
+      const nombre = $(el).text().trim();
 
-      const text = $(el).text();
+      const cargo = $(el)
+        .closest("p")
+        .find("b")
+        .first()
+        .text()
+        .trim() || $(el).parent().prev("span,b,p").first().text().trim();
+
+      const container = $(el).closest("p").length ? $(el).closest("p") : $(el).parent();
+      const text = container.text();
 
       const telefonoMatch = text.match(/Teléfono:\s*([^\n<]+)/i);
       const direccionMatch = text.match(/Dirección:\s*([^\n<]+)/i);
@@ -1843,6 +1850,7 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
