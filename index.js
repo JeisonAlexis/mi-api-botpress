@@ -1819,23 +1819,35 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
     $('b[style*="#238276"]').each((i, el) => {
       const nombre = $(el).text().trim();
 
-      const cargo = $(el)
-        .closest("p")
-        .find("b")
-        .first()
-        .text()
-        .trim() || $(el).parent().prev("span,b,p").first().text().trim();
+      const container =
+        $(el).closest("p").length > 0
+          ? $(el).closest("p")
+          : $(el).closest("span").length > 0
+          ? $(el).closest("span")
+          : $(el).parent();
 
-      const container = $(el).closest("p").length ? $(el).closest("p") : $(el).parent();
       const text = container.text();
+
+      let cargo =
+        container
+          .find("b")
+          .first()
+          .text()
+          .trim() || $(el).parent().prevAll("b,span,p").first().text().trim();
+
+      if (cargo === nombre || !cargo) {
+        const prevText = $(el).closest("p,div,span").prevAll().text();
+        const cargoMatch = prevText.match(/(Subdirección|Coordinación|Coordinador[a]? Académic[oa]?|Apoyo a Subdirección)/i);
+        cargo = cargoMatch ? cargoMatch[1] : cargo;
+      }
 
       const telefonoMatch = text.match(/Teléfono:\s*([^\n<]+)/i);
       const direccionMatch = text.match(/Dirección:\s*([^\n<]+)/i);
       const horarioMatch = text.match(/Horario de atención:\s*([^\n<]+)/i);
 
-      if (cargo && nombre) {
+      if (nombre) {
         directivos.push({
-          cargo,
+          cargo: cargo || "",
           nombre,
           telefono: telefonoMatch ? telefonoMatch[1].trim() : "",
           direccion: direccionMatch ? direccionMatch[1].trim() : "",
@@ -1844,12 +1856,33 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
       }
     });
 
+    if (!directivos.find(d => d.cargo.includes("Subdirección"))) {
+      const firstBlock = $("body").text();
+      const subMatch = firstBlock.match(/Subdirección[\s\S]{0,200}?Teléfono:[\s\S]{0,200}?Horario de atención:[^\n]+/i);
+      if (subMatch) {
+        const block = subMatch[0];
+        const nombreMatch = block.match(/Subdirección\s*([\w\sÁÉÍÓÚáéíóúñÑ.]+)/i);
+        const telefonoMatch = block.match(/Teléfono:\s*([^\n]+)/i);
+        const direccionMatch = block.match(/Dirección:\s*([^\n]+)/i);
+        const horarioMatch = block.match(/Horario de atención:\s*([^\n]+)/i);
+
+        directivos.unshift({
+          cargo: "Subdirección",
+          nombre: nombreMatch ? nombreMatch[1].trim() : "",
+          telefono: telefonoMatch ? telefonoMatch[1].trim() : "",
+          direccion: direccionMatch ? direccionMatch[1].trim() : "",
+          horario: horarioMatch ? horarioMatch[1].trim() : "",
+        });
+      }
+    }
+
     res.json(directivos);
   } catch (error) {
     console.error("Error al obtener los datos:", error);
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
+
 
 
 app.listen(port, () => {
