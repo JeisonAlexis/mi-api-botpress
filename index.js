@@ -1850,7 +1850,7 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
   }
 });
 
-app.get("/directorio_regional_risaralda", async (req, res) => {
+app.get("/director_regional_risaralda", async (req, res) => {
   try {
     const url = "https://comerciorisaralda.blogspot.com/p/direccion-regional.html";
     const { data } = await axios.get(url, {
