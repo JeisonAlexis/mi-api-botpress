@@ -1808,73 +1808,40 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
   try {
     const url = "https://caisarisaralda.blogspot.com/p/directorio.html";
     const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
     });
 
     const $ = cheerio.load(data);
     let directivos = [];
 
-    $('b[style*="#238276"]').each((i, el) => {
-      const nombre = $(el).text().trim();
+    $("p[style*='padding-left']").each((i, p) => {
+      const cargo = $(p).find("b").first().text().trim();
+      const nombre = $(p).find("b[style*='#238276']").text().trim() ||
+                     $(p).find("span[style*='#238276'] b").text().trim();
 
-      const container =
-        $(el).closest("p").length > 0
-          ? $(el).closest("p")
-          : $(el).closest("span").length > 0
-          ? $(el).closest("span")
-          : $(el).parent();
 
-      const text = container.text();
+      let nextP = $(p).next("p");
+      let altNombre = nextP.find("b[style*='#238276']").text().trim() ||
+                      nextP.find("span[style*='#238276'] b").text().trim();
 
-      let cargo =
-        container
-          .find("b")
-          .first()
-          .text()
-          .trim() || $(el).parent().prevAll("b,span,p").first().text().trim();
+      const container = nombre ? p : nextP;
 
-      if (cargo === nombre || !cargo) {
-        const prevText = $(el).closest("p,div,span").prevAll().text();
-        const cargoMatch = prevText.match(/(Subdirección|Coordinación|Coordinador[a]? Académic[oa]?|Apoyo a Subdirección)/i);
-        cargo = cargoMatch ? cargoMatch[1] : cargo;
-      }
+      const text = $(container).text();
 
       const telefonoMatch = text.match(/Teléfono:\s*([^\n<]+)/i);
       const direccionMatch = text.match(/Dirección:\s*([^\n<]+)/i);
       const horarioMatch = text.match(/Horario de atención:\s*([^\n<]+)/i);
 
-      if (nombre) {
+      if (cargo && (nombre || altNombre)) {
         directivos.push({
-          cargo: cargo || "",
-          nombre,
+          cargo,
+          nombre: nombre || altNombre,
           telefono: telefonoMatch ? telefonoMatch[1].trim() : "",
           direccion: direccionMatch ? direccionMatch[1].trim() : "",
           horario: horarioMatch ? horarioMatch[1].trim() : "",
         });
       }
     });
-
-    if (!directivos.find(d => d.cargo.includes("Subdirección"))) {
-      const firstBlock = $("body").text();
-      const subMatch = firstBlock.match(/Subdirección[\s\S]{0,200}?Teléfono:[\s\S]{0,200}?Horario de atención:[^\n]+/i);
-      if (subMatch) {
-        const block = subMatch[0];
-        const nombreMatch = block.match(/Subdirección\s*([\w\sÁÉÍÓÚáéíóúñÑ.]+)/i);
-        const telefonoMatch = block.match(/Teléfono:\s*([^\n]+)/i);
-        const direccionMatch = block.match(/Dirección:\s*([^\n]+)/i);
-        const horarioMatch = block.match(/Horario de atención:\s*([^\n]+)/i);
-
-        directivos.unshift({
-          cargo: "Subdirección",
-          nombre: nombreMatch ? nombreMatch[1].trim() : "",
-          telefono: telefonoMatch ? telefonoMatch[1].trim() : "",
-          direccion: direccionMatch ? direccionMatch[1].trim() : "",
-          horario: horarioMatch ? horarioMatch[1].trim() : "",
-        });
-      }
-    }
 
     res.json(directivos);
   } catch (error) {
@@ -1882,6 +1849,7 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
+
 
 
 
