@@ -1915,8 +1915,6 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     const $ = cheerio.load(data);
     const directorio = [];
 
-    const bloques = $("div.post-body").find("p, td, tr, div, span");
-
     const palabrasCargo = [
       "Subdirector",
       "Subdirectora",
@@ -1930,54 +1928,59 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       "Dinamizador",
       "Dinamizadora",
       "Unidad",
-      "Asistente"
+      "Asistente",
     ];
 
-    bloques.each((i, el) => {
-      const texto = $(el).text().replace(/\s+/g, " ").trim();
-      const correoMatch = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
-      if (!correoMatch) return;
+    $("div.post-body")
+      .find("p, td, tr, div, span")
+      .each((i, el) => {
+        const texto = $(el).text().replace(/\s+/g, " ").trim();
+        const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+        if (!correos) return;
 
-      correoMatch.forEach((correo) => {
-        const regex = new RegExp(
-          `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`
-        );
-        const match = texto.match(regex);
-        if (!match) return;
+        correos.forEach((correo) => {
+          const regex = new RegExp(
+            `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`
+          );
+          const match = texto.match(regex);
+          if (!match) return;
 
-        let nombre = match[1].trim();
-        let cargo = match[2].trim();
+          let nombre = match[1].trim();
+          let cargo = match[2].trim();
 
-        for (const palabra of palabrasCargo) {
-          const idx = cargo.indexOf(palabra);
-          if (idx > 0) {
-            const posibleApellido = cargo.substring(0, idx).trim();
-            const posibleCargo = cargo.substring(idx).trim();
-            if (posibleApellido.split(" ").length <= 2) {
-              nombre = `${nombre} ${posibleApellido}`;
-              cargo = posibleCargo;
+          for (const palabra of palabrasCargo) {
+            const idx = cargo.indexOf(palabra);
+            if (idx > 0) {
+              const posibleApellido = cargo.substring(0, idx).trim();
+              const posibleCargo = cargo.substring(idx).trim();
+              if (posibleApellido.split(" ").length <= 2) {
+                nombre = `${nombre} ${posibleApellido}`;
+                cargo = posibleCargo;
+              }
+              break;
             }
-            break;
           }
-        }
 
-        let imagen = $(el).find("img").attr("src")
-          || $(el).prev("p, div").find("img").attr("src")
-          || $(el).next("p, div").find("img").attr("src")
-          || null;
+          let imagen =
+            $(el).find("img").attr("src") ||
+            $(el).prevAll("p, div, span").find("img").first().attr("src") ||
+            $(el).nextAll("p, div, span").find("img").first().attr("src") ||
+            null;
 
-        if (imagen && !imagen.startsWith("http")) {
-          imagen = `https://blogger.googleusercontent.com/${imagen}`;
-        }
+          if (imagen && !imagen.startsWith("http")) {
+            imagen = `https://blogger.googleusercontent.com/${imagen}`;
+          }
 
-        directorio.push({
-          nombre,
-          cargo,
-          correo,
-          imagen: imagen || null,
+          if (!directorio.some((d) => d.correo === correo)) {
+            directorio.push({
+              nombre,
+              cargo,
+              correo,
+              imagen: imagen || null,
+            });
+          }
         });
       });
-    });
 
     if (directorio.length === 0)
       throw new Error("No se encontraron directivos válidos.");
@@ -1988,6 +1991,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 
