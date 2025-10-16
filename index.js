@@ -1937,7 +1937,6 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
   if (!correos) return;
 
   correos.forEach((correo) => {
-    // Asegura que el texto del cargo no se extienda más allá del siguiente correo
     const partes = texto.split(correo);
     const textoAntesCorreo = partes[0];
     const textoDespuesCorreo = partes[1] ? partes[1].split(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/)[0] : "";
@@ -1951,15 +1950,12 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     let nombre = match[1].trim();
     let cargo = match[2].trim();
 
-    // Si el cargo contiene el nombre o pedazos repetidos, los limpia
     if (cargo.includes(nombre.split(" ")[0])) {
       cargo = cargo.substring(cargo.indexOf(nombre.split(" ")[0]) + nombre.length).trim();
     }
 
-    // Corrige casos como “Coordinador Académico Académico”
     cargo = cargo.replace(/\b(Académico|Académica)\b.*\b(Académico|Académica)\b/, "$1");
 
-    // Filtro de nombre mal cortado por cargo
     for (const palabra of palabrasCargo) {
       const idx = cargo.indexOf(palabra);
       if (idx > 0) {
@@ -1973,7 +1969,6 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       }
     }
 
-    // Obtiene imagen
     let imagen = null;
     const divImagen = $(el).prevAll("div.separator").first();
     if (divImagen.length) imagen = divImagen.find("img").attr("src");
@@ -1982,7 +1977,6 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       imagen = `https://blogger.googleusercontent.com/${imagen}`;
     }
 
-    // Evita duplicados
     if (!directorio.some((d) => d.correo === correo)) {
       directorio.push({
         nombre,
