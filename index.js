@@ -1915,10 +1915,11 @@ app.get("/directorio_agropecuario_cauca", async (req, res) => {
       if (src) imagenes.push(src);
     });
 
-    res.json(imagenes);
+    const imagen = imagenes[1];
+    res.json({ imagen });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener las imágenes del directorio" });
+    res.status(500).json({ error: "Error al obtener la imagen del directorio" });
   }
 });
 
