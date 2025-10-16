@@ -1961,11 +1961,21 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
             }
           }
 
-          let imagen =
-            $(el).find("img").attr("src") ||
-            $(el).prevAll("p, div, span").find("img").first().attr("src") ||
-            $(el).nextAll("p, div, span").find("img").first().attr("src") ||
-            null;
+          let imagen = null;
+
+          imagen = $(el).find("img").attr("src");
+
+          if (!imagen) {
+            imagen = $(el).closest("tr, div, p, span").find("img").attr("src");
+          }
+
+          if (!imagen) {
+            imagen = $(el).prevAll("img").first().attr("src");
+          }
+
+          if (!imagen) {
+            imagen = $(el).nextAll("img").first().attr("src");
+          }
 
           if (imagen && !imagen.startsWith("http")) {
             imagen = `https://blogger.googleusercontent.com/${imagen}`;
@@ -1988,7 +1998,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.json(directorio);
   } catch (error) {
     console.error("❌ Error al obtener el directorio:", error.message);
-    res.status(500).json({ error: "Error al obtener el directorioo" });
+    res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
 
