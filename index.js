@@ -1917,8 +1917,11 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     const $ = cheerio.load(data);
     const directorio = [];
 
-    const textoCrudo = $("div.post-body").text().replace(/\s+/g, " ").trim();
-    const correos = textoCrudo.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g) || [];
+    const bloques = $("div.post-body").children("p, div, span, table, tr, td");
+    const imagenes = $("div.post-body img")
+      .map((i, el) => $(el).attr("src"))
+      .get()
+      .filter((src) => src && !src.includes("data:image"));
 
     const palabrasCargo = [
       "Subdirector",
@@ -1936,55 +1939,44 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       "Asistente"
     ];
 
-    const imagenes = [];
-    $("div.post-body img").each((i, el) => {
-      const src = $(el).attr("src");
-      if (src && !src.includes("data:image")) {
-        imagenes.push(src);
-      }
-    });
+    bloques.each((i, el) => {
+      const texto = $(el).text().replace(/\s+/g, " ").trim();
+      const correo = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
+      if (!correo) return;
 
-    for (const correo of correos) {
       const regex = new RegExp(
-        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`,
-        "g"
+        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo[0]}`
       );
+      const match = texto.match(regex);
+      if (!match) return;
 
-      const match = regex.exec(textoCrudo);
-      if (match) {
-        let nombre = match[1].trim();
-        let cargo = match[2].trim();
+      let nombre = match[1].trim();
+      let cargo = match[2].trim();
 
-        for (const palabra of palabrasCargo) {
-          const idx = cargo.indexOf(palabra);
-          if (idx > 0) {
-            const posibleApellido = cargo.substring(0, idx).trim();
-            const posibleCargo = cargo.substring(idx).trim();
-
-            if (posibleApellido.split(" ").length <= 2) {
-              nombre = `${nombre} ${posibleApellido}`;
-              cargo = posibleCargo;
-            }
-            break;
+      for (const palabra of palabrasCargo) {
+        const idx = cargo.indexOf(palabra);
+        if (idx > 0) {
+          const posibleApellido = cargo.substring(0, idx).trim();
+          const posibleCargo = cargo.substring(idx).trim();
+          if (posibleApellido.split(" ").length <= 2) {
+            nombre = `${nombre} ${posibleApellido}`;
+            cargo = posibleCargo;
           }
+          break;
         }
-
-        let imagen = null;
-        const nombreSimplificado = nombre.split(" ")[0].toLowerCase();
-
-        imagen =
-          imagenes.find((src) =>
-            src.toLowerCase().includes(nombreSimplificado)
-          ) || imagenes.shift() || null;
-
-        directorio.push({
-          nombre,
-          cargo,
-          correo,
-          imagen,
-        });
       }
-    }
+
+      let imagen = null;
+      const imgCercana = $(el).find("img").attr("src") || $(el).prev("p, div").find("img").attr("src");
+      if (imgCercana && !imgCercana.includes("data:image")) imagen = imgCercana;
+
+      directorio.push({
+        nombre,
+        cargo,
+        correo: correo[0],
+        imagen,
+      });
+    });
 
     res.json(directorio);
   } catch (error) {
