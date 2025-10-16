@@ -1905,6 +1905,43 @@ app.get("/director_regional_risaralda", async (req, res) => {
   }
 });
 
+app.get("/directorio_diseño_innovacion_tecnologica", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://senarisaraldadosquebradas.blogspot.com/p/directorio.html",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
+
+    const $ = cheerio.load(data);
+    const directorio = [];
+
+    $("div.separator").each((_, el) => {
+      const cargo = $(el).find("b, strong, h3").first().text().trim();
+      const nombre = $(el).find("p").text().trim();
+      const correo = $(el).find("a[href^='mailto:']").attr("href")?.replace("mailto:", "");
+      const imagen = $(el).find("img").attr("src");
+
+
+      if (nombre || cargo || correo) {
+        directorio.push({
+          cargo: cargo || null,
+          nombre: nombre || null,
+          correo: correo || null,
+          imagen: imagen || null,
+        });
+      }
+    });
+
+    res.json(directorio);
+  } catch (error) {
+    console.error("❌ Error al obtener el directorio:", error.message);
+    res.status(500).json({ error: "Error al obtener el directorio" });
+  }
+});
 
 
 app.listen(port, () => {
