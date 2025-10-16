@@ -1946,27 +1946,38 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
         let nombre = match[1].trim();
         let cargo = match[2].trim();
 
+
+        const palabraCargo = palabrasCargo.find((p) =>
+          texto.includes(p)
+        );
+        if (palabraCargo && !cargo.includes(palabraCargo)) {
+          const idxCargo = texto.indexOf(palabraCargo);
+          if (idxCargo !== -1) {
+            cargo = texto.substring(idxCargo, texto.indexOf(correo)).trim();
+          }
+        }
+
         for (const palabra of palabrasCargo) {
-          const idx = cargo.indexOf(palabra);
-          if (idx > 0) {
-            const posibleApellido = cargo.substring(0, idx).trim();
-            const posibleCargo = cargo.substring(idx).trim();
-            if (posibleApellido.split(" ").length <= 2) {
-              nombre = `${nombre} ${posibleApellido}`;
-              cargo = posibleCargo;
+          const regexCargoEnNombre = new RegExp(`\\b${palabra}\\b`, "i");
+          if (regexCargoEnNombre.test(nombre)) {
+            nombre = nombre.replace(regexCargoEnNombre, "").trim();
+          }
+        }
+
+        if (cargo.split(" ").length === 1) {
+          for (const palabra of palabrasCargo) {
+            if (texto.includes(`${palabra} ${cargo}`)) {
+              cargo = `${palabra} ${cargo}`;
+              break;
             }
-            break;
           }
         }
 
         let imagen = null;
-
         const divImagen = $(el).prevAll("div.separator").first();
         if (divImagen.length) {
           imagen = divImagen.find("img").attr("src");
-        }
-
-        if (!imagen) {
+        } else {
           imagen = $(el).prevAll("img").first().attr("src");
         }
 
@@ -1991,9 +2002,10 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.json(directorio);
   } catch (error) {
     console.error("❌ Error al obtener el directorio:", error.message);
-    res.status(500).json({ error: "Error al obtener el directorioo" });
+    res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 
