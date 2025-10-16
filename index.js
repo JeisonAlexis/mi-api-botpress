@@ -1896,6 +1896,33 @@ app.get("/directorio_agroindustrial_quindio", async (req, res) => {
   }
 });
 
+app.get("/directorio_agropecuario_cauca", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://centroagropecuarioregionalcau.blogspot.com/p/dire.html",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
+
+    const $ = cheerio.load(data);
+    const imagenes = [];
+
+    $("img").each((_, el) => {
+      const src = $(el).attr("src");
+      if (src) imagenes.push(src);
+    });
+
+    res.json(imagenes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las imágenes del directorio" });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
