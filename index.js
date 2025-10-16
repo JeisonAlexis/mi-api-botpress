@@ -1932,69 +1932,68 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     ];
 
     $("div.post-body").find("div, p, span").each((i, el) => {
-      const texto = $(el).text().replace(/\s+/g, " ").trim();
-      const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
-      if (!correos) return;
+  const texto = $(el).text().replace(/\s+/g, " ").trim();
+  const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+  if (!correos) return;
 
-      correos.forEach((correo) => {
-        const regex = new RegExp(
-          `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`
-        );
-        const match = texto.match(regex);
-        if (!match) return;
+  correos.forEach((correo) => {
+    // Asegura que el texto del cargo no se extienda más allá del siguiente correo
+    const partes = texto.split(correo);
+    const textoAntesCorreo = partes[0];
+    const textoDespuesCorreo = partes[1] ? partes[1].split(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/)[0] : "";
 
-        let nombre = match[1].trim();
-        let cargo = match[2].trim();
+    const regex = new RegExp(
+      `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s*${correo}`
+    );
+    const match = textoAntesCorreo.match(regex) || texto.match(regex);
+    if (!match) return;
 
+    let nombre = match[1].trim();
+    let cargo = match[2].trim();
 
-        const palabraCargo = palabrasCargo.find((p) =>
-          texto.includes(p)
-        );
-        if (palabraCargo && !cargo.includes(palabraCargo)) {
-          const idxCargo = texto.indexOf(palabraCargo);
-          if (idxCargo !== -1) {
-            cargo = texto.substring(idxCargo, texto.indexOf(correo)).trim();
-          }
+    // Si el cargo contiene el nombre o pedazos repetidos, los limpia
+    if (cargo.includes(nombre.split(" ")[0])) {
+      cargo = cargo.substring(cargo.indexOf(nombre.split(" ")[0]) + nombre.length).trim();
+    }
+
+    // Corrige casos como “Coordinador Académico Académico”
+    cargo = cargo.replace(/\b(Académico|Académica)\b.*\b(Académico|Académica)\b/, "$1");
+
+    // Filtro de nombre mal cortado por cargo
+    for (const palabra of palabrasCargo) {
+      const idx = cargo.indexOf(palabra);
+      if (idx > 0) {
+        const posibleApellido = cargo.substring(0, idx).trim();
+        const posibleCargo = cargo.substring(idx).trim();
+        if (posibleApellido.split(" ").length <= 2) {
+          nombre = `${nombre} ${posibleApellido}`;
+          cargo = posibleCargo;
         }
+        break;
+      }
+    }
 
-        for (const palabra of palabrasCargo) {
-          const regexCargoEnNombre = new RegExp(`\\b${palabra}\\b`, "i");
-          if (regexCargoEnNombre.test(nombre)) {
-            nombre = nombre.replace(regexCargoEnNombre, "").trim();
-          }
-        }
+    // Obtiene imagen
+    let imagen = null;
+    const divImagen = $(el).prevAll("div.separator").first();
+    if (divImagen.length) imagen = divImagen.find("img").attr("src");
+    if (!imagen) imagen = $(el).prevAll("img").first().attr("src");
+    if (imagen && !imagen.startsWith("http")) {
+      imagen = `https://blogger.googleusercontent.com/${imagen}`;
+    }
 
-        if (cargo.split(" ").length === 1) {
-          for (const palabra of palabrasCargo) {
-            if (texto.includes(`${palabra} ${cargo}`)) {
-              cargo = `${palabra} ${cargo}`;
-              break;
-            }
-          }
-        }
-
-        let imagen = null;
-        const divImagen = $(el).prevAll("div.separator").first();
-        if (divImagen.length) {
-          imagen = divImagen.find("img").attr("src");
-        } else {
-          imagen = $(el).prevAll("img").first().attr("src");
-        }
-
-        if (imagen && !imagen.startsWith("http")) {
-          imagen = `https://blogger.googleusercontent.com/${imagen}`;
-        }
-
-        if (!directorio.some((d) => d.correo === correo)) {
-          directorio.push({
-            nombre,
-            cargo,
-            correo,
-            imagen: imagen || null,
-          });
-        }
+    // Evita duplicados
+    if (!directorio.some((d) => d.correo === correo)) {
+      directorio.push({
+        nombre,
+        cargo,
+        correo,
+        imagen: imagen || null,
       });
-    });
+    }
+  });
+});
+
 
     if (directorio.length === 0)
       throw new Error("No se encontraron directivos válidos.");
@@ -2005,9 +2004,6 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
-
-
-
 
 
 app.listen(port, () => {
