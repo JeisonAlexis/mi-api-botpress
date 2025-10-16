@@ -1905,7 +1905,7 @@ app.get("/director_regional_risaralda", async (req, res) => {
   }
 });
 
-app.get("/directorio_diseño_innovacion_tecnologica", async (req, res) => {
+app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
   try {
     const { data } = await axios.get(
       "https://senarisaraldadosquebradas.blogspot.com/p/directorio.html",
