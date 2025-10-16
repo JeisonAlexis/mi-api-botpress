@@ -1874,167 +1874,28 @@ app.get("/director_regional_risaralda", async (req, res) => {
   }
 });
 
-app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
+app.get("/directorio_agroindustrial_quindio", async (req, res) => {
   try {
     const { data } = await axios.get(
-      "https://senarisaraldadosquebradas.blogspot.com/p/directorio.html",
-      { headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" } }
+      "https://senagroquindio.blogspot.com/p/directorio.html",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
     );
 
     const $ = cheerio.load(data);
-    const directorio = [];
-    const procesados = new Set();
 
-    const palabrasCargo = [
-      "Subdirectora",
-      "Subdirector",
-      "Coordinadora",
-      "Coordinador",
-      "Líder",
-      "Apoyo",
-      "Profesional",
-      "Responsable",
-      "Gestor",
-      "Gestora",
-      "Dinamizadora",
-      "Dinamizador",
-      "Unidad",
-      "Asistente",
-    ];
+    const driveLink = $('a[href*="drive.google.com"]').attr("href");
 
-    // Buscar todos los enlaces de correo
-    $("a[href^='mailto:']").each((i, el) => {
-      const correo = $(el).attr("href").replace("mailto:", "").trim();
-      
-      // Saltar si ya fue procesado
-      if (procesados.has(correo)) return;
-      procesados.add(correo);
-
-      // Buscar el contenedor padre más cercano
-      let container = $(el).closest("p, div");
-      let textoCompleto = container.text().replace(/\s+/g, " ").trim();
-
-      // Si no hay suficiente contexto, buscar en hermanos
-      if (textoCompleto.length < 20) {
-        let prev = container.prev();
-        let attempts = 0;
-        while (prev.length && attempts < 5) {
-          textoCompleto = prev.text() + " " + textoCompleto;
-          prev = prev.prev();
-          attempts++;
-        }
-      }
-
-      // Buscar imagen cercana (hacia atrás)
-      let imagen = null;
-      let searchEl = container;
-      let depth = 0;
-      
-      while (!imagen && depth < 10) {
-        // Buscar en hermanos anteriores
-        let prevs = searchEl.prevAll();
-        prevs.each((j, prev) => {
-          if (!imagen) {
-            const img = $(prev).find("img").first();
-            if (img.length) {
-              imagen = img.attr("src");
-              return false; // break
-            }
-          }
-        });
-        
-        searchEl = searchEl.parent();
-        depth++;
-      }
-
-      // Normalizar URL de imagen
-      if (imagen) {
-        if (!imagen.startsWith("http")) {
-          imagen = imagen.startsWith("//") 
-            ? `https:${imagen}` 
-            : `https:${imagen}`;
-        }
-      }
-
-      // Extraer nombre (antes del correo o cargo)
-      let nombre = "Sin nombre";
-      let cargo = "Sin cargo";
-
-      // Limpiar el texto: quitar el correo
-      const textoSinCorreo = textoCompleto.replace(correo, "").trim();
-
-      // Buscar patrón: Nombre + Cargo
-      const regexPatron = new RegExp(
-        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+(${palabrasCargo.join("|")})([^A-Z]*)`,
-        "i"
-      );
-
-      const matchPatron = textoSinCorreo.match(regexPatron);
-
-      if (matchPatron) {
-        nombre = matchPatron[1].trim();
-        cargo = (matchPatron[2] + " " + matchPatron[3]).trim()
-          .replace(/\s+/g, " ")
-          .split(/[A-Z][a-z]{2,}/)[0] // Cortar antes de otro nombre propio
-          .trim();
-      } else {
-        // Buscar solo el cargo
-        const regexCargo = new RegExp(`(${palabrasCargo.join("|")})([^A-Z@]*)`, "i");
-        const matchCargo = textoSinCorreo.match(regexCargo);
-        
-        if (matchCargo) {
-          cargo = (matchCargo[1] + " " + matchCargo[2]).trim()
-            .replace(/\s+/g, " ")
-            .substring(0, 100);
-        }
-
-        // Buscar nombre: últimas palabras capitalizadas antes del cargo o correo
-        const textoAntesCargoOCorreo = textoSinCorreo.split(
-          new RegExp(`(${palabrasCargo.join("|")})`, "i")
-        )[0];
-
-        const palabras = textoAntesCargoOCorreo
-          .split(/\s+/)
-          .filter(p => /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(p));
-
-        if (palabras.length >= 2) {
-          nombre = palabras.slice(-4).join(" "); // Últimas 2-4 palabras
-        } else if (palabras.length > 0) {
-          nombre = palabras.join(" ");
-        }
-      }
-
-      // Limpiar cargo: quitar textos extra
-      cargo = cargo
-        .replace(/\d+/g, "") // quitar números
-        .replace(/\s+/g, " ")
-        .replace(/[^\w\sáéíóúñÁÉÍÓÚÑ]/g, " ")
-        .trim()
-        .substring(0, 80);
-
-      // Limpiar nombre: quitar palabras de cargo que puedan estar incluidas
-      palabrasCargo.forEach(palabra => {
-        nombre = nombre.replace(new RegExp(palabra, "gi"), "").trim();
-      });
-
-      directorio.push({
-        nombre: nombre || "Sin nombre",
-        cargo: cargo || "Sin cargo",
-        correo,
-        imagen: imagen || null,
-      });
-    });
-
-    if (directorio.length === 0) {
-      throw new Error("No se encontraron directivos válidos.");
-    }
-
-    res.json(directorio);
+    res.json({ driveLink });
   } catch (error) {
-    console.error("❌ Error al obtener el directorio:", error.message);
-    res.status(500).json({ error: "Error al obtener el directorio" });
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el enlace del directorio" });
   }
 });
+
 
 
 
