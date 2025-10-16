@@ -1931,51 +1931,58 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       "Asistente",
     ];
 
-    $("div.separator").each((i, el) => {
-      const imagen = $(el).find("img").attr("src");
-      const bloqueTexto = $(el).nextAll("div, p, span").first();
-      const texto = bloqueTexto.text().replace(/\s+/g, " ").trim();
+    $("div.post-body").find("div, p, span").each((i, el) => {
+      const texto = $(el).text().replace(/\s+/g, " ").trim();
+      const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+      if (!correos) return;
 
-      const correo = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
-      if (!correo) return;
+      correos.forEach((correo) => {
+        const regex = new RegExp(
+          `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`
+        );
+        const match = texto.match(regex);
+        if (!match) return;
 
-      const email = correo[0];
+        let nombre = match[1].trim();
+        let cargo = match[2].trim();
 
-      const regex = new RegExp(
-        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${email}`
-      );
-      const match = texto.match(regex);
-      if (!match) return;
-
-      let nombre = match[1].trim();
-      let cargo = match[2].trim();
-
-      for (const palabra of palabrasCargo) {
-        const idx = cargo.indexOf(palabra);
-        if (idx > 0) {
-          const posibleApellido = cargo.substring(0, idx).trim();
-          const posibleCargo = cargo.substring(idx).trim();
-          if (posibleApellido.split(" ").length <= 2) {
-            nombre = `${nombre} ${posibleApellido}`;
-            cargo = posibleCargo;
+        for (const palabra of palabrasCargo) {
+          const idx = cargo.indexOf(palabra);
+          if (idx > 0) {
+            const posibleApellido = cargo.substring(0, idx).trim();
+            const posibleCargo = cargo.substring(idx).trim();
+            if (posibleApellido.split(" ").length <= 2) {
+              nombre = `${nombre} ${posibleApellido}`;
+              cargo = posibleCargo;
+            }
+            break;
           }
-          break;
         }
-      }
 
-      let imagenFinal = imagen;
-      if (imagenFinal && !imagenFinal.startsWith("http")) {
-        imagenFinal = `https://blogger.googleusercontent.com/${imagenFinal}`;
-      }
+        let imagen = null;
 
-      if (!directorio.some((d) => d.correo === email)) {
-        directorio.push({
-          nombre,
-          cargo,
-          correo: email,
-          imagen: imagenFinal || null,
-        });
-      }
+        const divImagen = $(el).prevAll("div.separator").first();
+        if (divImagen.length) {
+          imagen = divImagen.find("img").attr("src");
+        }
+
+        if (!imagen) {
+          imagen = $(el).prevAll("img").first().attr("src");
+        }
+
+        if (imagen && !imagen.startsWith("http")) {
+          imagen = `https://blogger.googleusercontent.com/${imagen}`;
+        }
+
+        if (!directorio.some((d) => d.correo === correo)) {
+          directorio.push({
+            nombre,
+            cargo,
+            correo,
+            imagen: imagen || null,
+          });
+        }
+      });
     });
 
     if (directorio.length === 0)
@@ -1984,7 +1991,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.json(directorio);
   } catch (error) {
     console.error("❌ Error al obtener el directorio:", error.message);
-    res.status(500).json({ error: "Error al obtener el directorio" });
+    res.status(500).json({ error: "Error al obtener el directorioo" });
   }
 });
 
