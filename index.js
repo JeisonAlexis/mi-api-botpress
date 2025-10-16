@@ -1896,7 +1896,27 @@ app.get("/directorio_agroindustrial_quindio", async (req, res) => {
   }
 });
 
+app.get("/directorio_comercio_turismo_quindio", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://centrodecomercioyturismo.blogspot.com/p/directorio.html",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
 
+    const $ = cheerio.load(data);
+
+    const driveLink = $('a[href*="drive.google.com"]').attr("href");
+
+    res.json({ driveLink });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el enlace del directorio" });
+  }
+});
 
 
 
