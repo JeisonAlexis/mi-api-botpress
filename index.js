@@ -1883,135 +1883,153 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
 
     const $ = cheerio.load(data);
     const directorio = [];
+    const procesados = new Set();
 
     const palabrasCargo = [
-      "Subdirector",
       "Subdirectora",
-      "Coordinador",
+      "Subdirector",
       "Coordinadora",
+      "Coordinador",
       "Líder",
       "Apoyo",
       "Profesional",
       "Responsable",
       "Gestor",
-      "Dinamizador",
+      "Gestora",
       "Dinamizadora",
+      "Dinamizador",
       "Unidad",
       "Asistente",
     ];
 
-    $("div.post-body *").each((i, el) => {
-      const text = $(el).text();
-      const correos = text.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+    // Buscar todos los enlaces de correo
+    $("a[href^='mailto:']").each((i, el) => {
+      const correo = $(el).attr("href").replace("mailto:", "").trim();
       
-      if (!correos) return;
+      // Saltar si ya fue procesado
+      if (procesados.has(correo)) return;
+      procesados.add(correo);
 
-      correos.forEach((correo) => {
-        if (directorio.some((d) => d.correo === correo)) return;
+      // Buscar el contenedor padre más cercano
+      let container = $(el).closest("p, div");
+      let textoCompleto = container.text().replace(/\s+/g, " ").trim();
 
-        let imagen = null;
-        let currentEl = $(el);
-        let searchDepth = 0;
-        
-        while (currentEl.length && searchDepth < 10) {
-          const img = currentEl.find("img").first();
-          if (img.length) {
-            imagen = img.attr("src");
-            break;
-          }
+      // Si no hay suficiente contexto, buscar en hermanos
+      if (textoCompleto.length < 20) {
+        let prev = container.prev();
+        let attempts = 0;
+        while (prev.length && attempts < 5) {
+          textoCompleto = prev.text() + " " + textoCompleto;
+          prev = prev.prev();
+          attempts++;
+        }
+      }
 
-          const prevSeparator = currentEl.prevAll("div.separator").first();
-          if (prevSeparator.length) {
-            const img = prevSeparator.find("img").first();
+      // Buscar imagen cercana (hacia atrás)
+      let imagen = null;
+      let searchEl = container;
+      let depth = 0;
+      
+      while (!imagen && depth < 10) {
+        // Buscar en hermanos anteriores
+        let prevs = searchEl.prevAll();
+        prevs.each((j, prev) => {
+          if (!imagen) {
+            const img = $(prev).find("img").first();
             if (img.length) {
               imagen = img.attr("src");
-              break;
+              return false; // break
             }
           }
-          
-          currentEl = currentEl.parent();
-          searchDepth++;
-        }
+        });
+        
+        searchEl = searchEl.parent();
+        depth++;
+      }
 
-        if (imagen && !imagen.startsWith("http")) {
+      // Normalizar URL de imagen
+      if (imagen) {
+        if (!imagen.startsWith("http")) {
           imagen = imagen.startsWith("//") 
             ? `https:${imagen}` 
-            : `https://blogger.googleusercontent.com${imagen}`;
+            : `https:${imagen}`;
         }
+      }
 
-        let contexto = "";
-        let parent = $(el).parent();
+      // Extraer nombre (antes del correo o cargo)
+      let nombre = "Sin nombre";
+      let cargo = "Sin cargo";
 
-        for (let j = 0; j < 5; j++) {
-          contexto += " " + $(el).prevAll().slice(0, 3).text();
-          contexto += " " + $(el).text();
-          contexto += " " + $(el).nextAll().slice(0, 2).text();
-          
-          if (parent.length) {
-            contexto += " " + parent.text();
-            parent = parent.parent();
-          }
-        }
+      // Limpiar el texto: quitar el correo
+      const textoSinCorreo = textoCompleto.replace(correo, "").trim();
 
-        contexto = contexto.replace(/\s+/g, " ").trim();
+      // Buscar patrón: Nombre + Cargo
+      const regexPatron = new RegExp(
+        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+(${palabrasCargo.join("|")})([^A-Z]*)`,
+        "i"
+      );
 
-        let nombre = "Sin nombre";
-        let cargo = "Sin cargo";
+      const matchPatron = textoSinCorreo.match(regexPatron);
 
-        const regexNombreCargo = new RegExp(
-          `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s*(?:${palabrasCargo.join("|")})([^@]*)${correo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
-          "i"
-        );
-
-        let match = contexto.match(regexNombreCargo);
-        
-        if (match) {
-          nombre = match[1].trim();
-          cargo = contexto.match(new RegExp(`(${palabrasCargo.join("|")}[^@]*)`, "i"))?.[1]?.trim() || "Sin cargo";
-        } else {
-          const partes = contexto.split(correo);
-          const antes = partes[0].trim();
-
-          const palabrasAntes = antes.split(/\s+/).filter(p => p.length > 2);
-          const posiblesNombres = palabrasAntes.slice(-5).join(" ");
-          
-          const regexNombre = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})$/;
-          const nombreMatch = posiblesNombres.match(regexNombre);
-          
-          if (nombreMatch) {
-            nombre = nombreMatch[1].trim();
-          }
-
-          const cargoMatch = contexto.match(new RegExp(`(${palabrasCargo.join("|")}[^@]*)`, "i"));
-          if (cargoMatch) {
-            cargo = cargoMatch[1].trim();
-          }
-        }
-
-        cargo = cargo
-          .replace(correo, "")
+      if (matchPatron) {
+        nombre = matchPatron[1].trim();
+        cargo = (matchPatron[2] + " " + matchPatron[3]).trim()
           .replace(/\s+/g, " ")
-          .trim()
-          .substring(0, 100); 
+          .split(/[A-Z][a-z]{2,}/)[0] // Cortar antes de otro nombre propio
+          .trim();
+      } else {
+        // Buscar solo el cargo
+        const regexCargo = new RegExp(`(${palabrasCargo.join("|")})([^A-Z@]*)`, "i");
+        const matchCargo = textoSinCorreo.match(regexCargo);
+        
+        if (matchCargo) {
+          cargo = (matchCargo[1] + " " + matchCargo[2]).trim()
+            .replace(/\s+/g, " ")
+            .substring(0, 100);
+        }
 
-        directorio.push({
-          nombre,
-          cargo,
-          correo,
-          imagen: imagen || null,
-        });
+        // Buscar nombre: últimas palabras capitalizadas antes del cargo o correo
+        const textoAntesCargoOCorreo = textoSinCorreo.split(
+          new RegExp(`(${palabrasCargo.join("|")})`, "i")
+        )[0];
+
+        const palabras = textoAntesCargoOCorreo
+          .split(/\s+/)
+          .filter(p => /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(p));
+
+        if (palabras.length >= 2) {
+          nombre = palabras.slice(-4).join(" "); // Últimas 2-4 palabras
+        } else if (palabras.length > 0) {
+          nombre = palabras.join(" ");
+        }
+      }
+
+      // Limpiar cargo: quitar textos extra
+      cargo = cargo
+        .replace(/\d+/g, "") // quitar números
+        .replace(/\s+/g, " ")
+        .replace(/[^\w\sáéíóúñÁÉÍÓÚÑ]/g, " ")
+        .trim()
+        .substring(0, 80);
+
+      // Limpiar nombre: quitar palabras de cargo que puedan estar incluidas
+      palabrasCargo.forEach(palabra => {
+        nombre = nombre.replace(new RegExp(palabra, "gi"), "").trim();
+      });
+
+      directorio.push({
+        nombre: nombre || "Sin nombre",
+        cargo: cargo || "Sin cargo",
+        correo,
+        imagen: imagen || null,
       });
     });
 
-    const directorioUnico = Array.from(
-      new Map(directorio.map(item => [item.correo, item])).values()
-    );
-
-    if (directorioUnico.length === 0) {
+    if (directorio.length === 0) {
       throw new Error("No se encontraron directivos válidos.");
     }
 
-    res.json(directorioUnico);
+    res.json(directorio);
   } catch (error) {
     console.error("❌ Error al obtener el directorio:", error.message);
     res.status(500).json({ error: "Error al obtener el directorio" });
