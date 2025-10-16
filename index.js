@@ -1883,82 +1883,85 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
 
     const $ = cheerio.load(data);
     const directorio = [];
-    const emailRegexGlobal = /[a-zA-Z0-9._%+-]+@sena\.edu\.co/g;
-    const namePatternEnd = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})$/;
+
+    const palabrasCargo = [
+      "Subdirector",
+      "Subdirectora",
+      "Coordinador",
+      "Coordinadora",
+      "Líder",
+      "Apoyo",
+      "Profesional",
+      "Responsable",
+      "Gestor",
+      "Dinamizador",
+      "Dinamizadora",
+      "Unidad",
+      "Asistente",
+    ];
 
     $("div.post-body").find("div.separator").each((i, sepEl) => {
       const imgSrc = $(sepEl).find("img").attr("src") || null;
       let imagen = imgSrc;
-      if (imagen && !imagen.startsWith("http")) imagen = `https://blogger.googleusercontent.com/${imagen}`;
-
-      let segmentNodes = [];
-      let node = $(sepEl).next();
-      while (node.length && !node.is("div.separator")) {
-        segmentNodes.push(node);
-        node = node.next();
+      if (imagen && !imagen.startsWith("http")) {
+        imagen = `https://blogger.googleusercontent.com/${imagen}`;
       }
 
-      const segmentText = segmentNodes
-        .map((n) => $(n).text())
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
+      let textGroup = "";
+      let next = $(sepEl).next();
+      while (next.length && !next.is("div.separator")) {
+        textGroup += " " + next.text();
+        next = next.next();
+      }
 
-      const emails = [...(segmentText.match(emailRegexGlobal) || [])];
-      if (emails.length === 0) return;
+      textGroup = textGroup.replace(/\s+/g, " ").trim();
+      const correos = textGroup.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+      if (!correos) return;
 
-      let cursor = 0;
-      for (const email of emails) {
-        const idx = segmentText.indexOf(email, cursor);
-        if (idx === -1) continue;
+      correos.forEach((correo) => {
+        const partes = textGroup.split(correo);
+        const antes = partes[0].trim();
 
-        const before = segmentText.slice(0, idx).trim();
-        const after = segmentText.slice(idx + email.length).trim();
+        // intenta capturar el nombre antes de una palabra de cargo
+        const regexNombreCargo = new RegExp(
+          `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+(${palabrasCargo.join("|")})(.*)`,
+          "i"
+        );
 
-        const beforeLimited = before.slice(-200).trim();
-        const nameMatch = beforeLimited.match(namePatternEnd);
-        let nombre = null;
-        let cargo = null;
+        let nombre = "Sin nombre";
+        let cargo = "Sin cargo";
 
-        if (nameMatch) {
-          nombre = nameMatch[1].trim();
-          cargo = beforeLimited.slice(0, beforeLimited.length - nombre.length).trim();
+        const match = antes.match(regexNombreCargo);
+        if (match) {
+          nombre = match[1].trim();
+          cargo = `${match[2]}${match[3]}`.trim();
         } else {
-          const words = beforeLimited.split(/\s+/).filter(Boolean);
-          if (words.length >= 2) {
-            nombre = words.slice(-2).join(" ");
-            cargo = words.slice(0, -2).join(" ");
-          } else {
-            nombre = beforeLimited || "Sin nombre";
-            cargo = "";
-          }
+          // fallback: buscar un nombre propio al final antes del correo
+          const regexNombreSimple = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,3})$/;
+          const n = antes.match(regexNombreSimple);
+          if (n) nombre = n[1].trim();
+
+          // buscar cargo después del correo
+          const despues = partes[1] ? partes[1].trim() : "";
+          const c = despues.match(
+            new RegExp(`(${palabrasCargo.join("|")})([^@]*)`, "i")
+          );
+          if (c) cargo = `${c[1]} ${c[2]}`.trim();
         }
 
-        cargo = cargo.replace(/\s{2,}/g, " ").trim();
-        if (!cargo) {
-          const afterLimited = after.split(/[.;\n]/)[0].trim().slice(0, 150);
-          const foundCargo = afterLimited.match(/^(Subdirector|Subdirectora|Coordinador|Coordinadora|Líder|Apoyo|Profesional|Responsable|Gestor|Dinamizador|Dinamizadora|Unidad|Asistente)/i);
-          if (foundCargo) cargo = afterLimited;
-        }
-
-        nombre = nombre.replace(/\s{2,}/g, " ").trim();
-        cargo = cargo.trim();
-        if (cargo && cargo.length > 0 && /^[a-z]/.test(cargo)) cargo = cargo.charAt(0).toUpperCase() + cargo.slice(1);
-
-        if (!directorio.some((d) => d.correo === email)) {
+        if (!directorio.some((d) => d.correo === correo)) {
           directorio.push({
-            nombre: nombre || "Sin nombre",
-            cargo: cargo || "Sin cargo",
-            correo: email,
-            imagen: imagen || null
+            nombre,
+            cargo,
+            correo,
+            imagen: imagen || null,
           });
         }
-
-        cursor = idx + email.length;
-      }
+      });
     });
 
-    if (directorio.length === 0) throw new Error("No se encontraron directivos válidos.");
+    if (directorio.length === 0)
+      throw new Error("No se encontraron directivos válidos.");
 
     res.json(directorio);
   } catch (error) {
@@ -1966,6 +1969,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 
