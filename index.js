@@ -1919,22 +1919,38 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     const $ = cheerio.load(data);
     const directorio = [];
 
-    $("div.separator").each((_, el) => {
-      const cargo = $(el).find("b, strong, h3").first().text().trim();
-      const nombre = $(el).find("p").text().trim();
-      const correo = $(el).find("a[href^='mailto:']").attr("href")?.replace("mailto:", "");
-      const imagen = $(el).find("img").attr("src");
+    const textoCrudo = $("div.post-body").text().replace(/\s+/g, " ").trim();
 
+    const correos = textoCrudo.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g) || [];
 
-      if (nombre || cargo || correo) {
+    for (const correo of correos) {
+      const regex = new RegExp(
+        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`,
+        "g"
+      );
+
+      const match = regex.exec(textoCrudo);
+
+      if (match) {
+        const nombre = match[1].trim();
+        const cargo = match[2].trim();
+
+        let imagen = null;
+        $("img").each((_, img) => {
+          const alt = $(img).attr("alt") || "";
+          if (alt.includes(nombre.split(" ")[0])) {
+            imagen = $(img).attr("src");
+          }
+        });
+
         directorio.push({
-          cargo: cargo || null,
-          nombre: nombre || null,
-          correo: correo || null,
-          imagen: imagen || null,
+          nombre,
+          cargo,
+          correo,
+          imagen,
         });
       }
-    });
+    }
 
     res.json(directorio);
   } catch (error) {
