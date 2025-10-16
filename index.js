@@ -1909,19 +1909,13 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
   try {
     const { data } = await axios.get(
       "https://senarisaraldadosquebradas.blogspot.com/p/directorio.html",
-      {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
-      }
+      { headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" } }
     );
 
     const $ = cheerio.load(data);
     const directorio = [];
 
-    const bloques = $("div.post-body").children("p, div, span, table, tr, td");
-    const imagenes = $("div.post-body img")
-      .map((i, el) => $(el).attr("src"))
-      .get()
-      .filter((src) => src && !src.includes("data:image"));
+    const bloques = $("div.post-body").find("p, td, tr, div, span");
 
     const palabrasCargo = [
       "Subdirector",
@@ -1941,42 +1935,52 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
 
     bloques.each((i, el) => {
       const texto = $(el).text().replace(/\s+/g, " ").trim();
-      const correo = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
-      if (!correo) return;
+      const correoMatch = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+      if (!correoMatch) return;
 
-      const regex = new RegExp(
-        `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo[0]}`
-      );
-      const match = texto.match(regex);
-      if (!match) return;
+      correoMatch.forEach((correo) => {
+        const regex = new RegExp(
+          `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`
+        );
+        const match = texto.match(regex);
+        if (!match) return;
 
-      let nombre = match[1].trim();
-      let cargo = match[2].trim();
+        let nombre = match[1].trim();
+        let cargo = match[2].trim();
 
-      for (const palabra of palabrasCargo) {
-        const idx = cargo.indexOf(palabra);
-        if (idx > 0) {
-          const posibleApellido = cargo.substring(0, idx).trim();
-          const posibleCargo = cargo.substring(idx).trim();
-          if (posibleApellido.split(" ").length <= 2) {
-            nombre = `${nombre} ${posibleApellido}`;
-            cargo = posibleCargo;
+        for (const palabra of palabrasCargo) {
+          const idx = cargo.indexOf(palabra);
+          if (idx > 0) {
+            const posibleApellido = cargo.substring(0, idx).trim();
+            const posibleCargo = cargo.substring(idx).trim();
+            if (posibleApellido.split(" ").length <= 2) {
+              nombre = `${nombre} ${posibleApellido}`;
+              cargo = posibleCargo;
+            }
+            break;
           }
-          break;
         }
-      }
 
-      let imagen = null;
-      const imgCercana = $(el).find("img").attr("src") || $(el).prev("p, div").find("img").attr("src");
-      if (imgCercana && !imgCercana.includes("data:image")) imagen = imgCercana;
+        let imagen = $(el).find("img").attr("src")
+          || $(el).prev("p, div").find("img").attr("src")
+          || $(el).next("p, div").find("img").attr("src")
+          || null;
 
-      directorio.push({
-        nombre,
-        cargo,
-        correo: correo[0],
-        imagen,
+        if (imagen && !imagen.startsWith("http")) {
+          imagen = `https://blogger.googleusercontent.com/${imagen}`;
+        }
+
+        directorio.push({
+          nombre,
+          cargo,
+          correo,
+          imagen: imagen || null,
+        });
       });
     });
+
+    if (directorio.length === 0)
+      throw new Error("No se encontraron directivos válidos.");
 
     res.json(directorio);
   } catch (error) {
