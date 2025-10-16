@@ -1910,9 +1910,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     const { data } = await axios.get(
       "https://senarisaraldadosquebradas.blogspot.com/p/directorio.html",
       {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
-        },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)" },
       }
     );
 
@@ -1938,6 +1936,14 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       "Asistente"
     ];
 
+    const imagenes = [];
+    $("div.post-body img").each((i, el) => {
+      const src = $(el).attr("src");
+      if (src && !src.includes("data:image")) {
+        imagenes.push(src);
+      }
+    });
+
     for (const correo of correos) {
       const regex = new RegExp(
         `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s+${correo}`,
@@ -1945,7 +1951,6 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       );
 
       const match = regex.exec(textoCrudo);
-
       if (match) {
         let nombre = match[1].trim();
         let cargo = match[2].trim();
@@ -1964,11 +1969,19 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
           }
         }
 
+        let imagen = null;
+        const nombreSimplificado = nombre.split(" ")[0].toLowerCase();
+
+        imagen =
+          imagenes.find((src) =>
+            src.toLowerCase().includes(nombreSimplificado)
+          ) || imagenes.shift() || null;
+
         directorio.push({
           nombre,
           cargo,
           correo,
-          imagen: null,
+          imagen,
         });
       }
     }
@@ -1979,6 +1992,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 app.listen(port, () => {
