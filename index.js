@@ -16,11 +16,9 @@ app.get("/", (req, res) => {
   res.send("¡Hola desde mi servicio de Render!");
 });
 
-
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
-
 
 app.get("/recuperar-cuenta-sofia", async (req, res) => {
   try {
@@ -347,12 +345,10 @@ app.get("/ofertas-ciudad", async (req, res) => {
       res.status(404).json({ error: "Pregunta no encontrada" });
     }
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Error al consultar la página del SENA",
-        detalles: error.message,
-      });
+    res.status(500).json({
+      error: "Error al consultar la página del SENA",
+      detalles: error.message,
+    });
   }
 });
 
@@ -559,16 +555,13 @@ app.get("/prueba_seleccion", async (req, res) => {
 app.get("/prueba", async (req, res) => {
   try {
     const path = require("path");
-    const filePath = path.join(__dirname, "xhr_responses.json"); 
+    const filePath = path.join(__dirname, "xhr_responses.json");
     const raw = await fs.promises.readFile(filePath, "utf8").catch(() => null);
 
-
     if (!raw) {
-      return res
-        .status(500)
-        .json({
-          error: "Archivo xhr_responses.json no encontrado en el proyecto.",
-        });
+      return res.status(500).json({
+        error: "Archivo xhr_responses.json no encontrado en el proyecto.",
+      });
     }
 
     let responses;
@@ -581,7 +574,6 @@ app.get("/prueba", async (req, res) => {
     }
 
     const families = [];
-
 
     function findFamilies(node) {
       if (!node || typeof node !== "object") return;
@@ -596,7 +588,6 @@ app.get("/prueba", async (req, res) => {
       }
 
       if (Array.isArray(node.programas)) {
-
         families.push({
           fam_id: node.fam_id || null,
           fam_descripcion: node.fam_descripcion || null,
@@ -609,30 +600,22 @@ app.get("/prueba", async (req, res) => {
       for (const k of Object.keys(node)) {
         try {
           findFamilies(node[k]);
-        } catch (e) {
-
-        }
+        } catch (e) {}
       }
     }
 
-
     for (const resp of responses) {
-
       let body = resp.body ?? resp.bodyParsed ?? resp.data ?? null;
-
 
       if (typeof body === "string") {
         try {
           body = JSON.parse(body);
         } catch (e) {
-
           body = null;
         }
       }
 
-
       if (!body && typeof resp === "object") {
-
         findFamilies(resp);
       }
 
@@ -641,9 +624,7 @@ app.get("/prueba", async (req, res) => {
       }
     }
 
-
     if (families.length === 0) {
-
       function findProgramArrays(node) {
         if (!node || typeof node !== "object") return null;
         if (Array.isArray(node)) {
@@ -656,7 +637,6 @@ app.get("/prueba", async (req, res) => {
                 ("prog_codigo" in it || "prog_nombre" in it)
             )
           ) {
-
             return node;
           }
 
@@ -685,7 +665,6 @@ app.get("/prueba", async (req, res) => {
         }
         const arr = findProgramArrays(body);
         if (arr) {
-
           families.push({
             fam_id: null,
             fam_descripcion: null,
@@ -696,7 +675,6 @@ app.get("/prueba", async (req, res) => {
       }
     }
 
-
     const programas = [];
     for (const fam of families) {
       const famMeta = {
@@ -706,7 +684,6 @@ app.get("/prueba", async (req, res) => {
       };
       if (Array.isArray(fam.programas)) {
         for (const p of fam.programas) {
-
           programas.push({
             fam_id: famMeta.fam_id,
             fam_descripcion: famMeta.fam_descripcion,
@@ -723,19 +700,17 @@ app.get("/prueba", async (req, res) => {
             prog_duracion: p.prog_duracion ?? null,
             prog_requisitos: p.prog_requisitos ?? null,
             prog_contenido: p.prog_contenido ?? null,
-            raw: p, 
+            raw: p,
           });
         }
       }
     }
-
 
     if (programas.length === 0) {
       return res
         .status(404)
         .json({ error: "No se encontraron programas en xhr_responses.json" });
     }
-
 
     const { fam_id, prog_codigo, q, limit } = req.query;
     let result = programas;
@@ -771,7 +746,6 @@ app.get("/prueba", async (req, res) => {
       .json({ error: "Error interno al procesar xhr_responses.json" });
   }
 });
-
 
 app.get("/duracion_prueba_seleccion", async (req, res) => {
   try {
@@ -1283,7 +1257,6 @@ app.get("/directorio_minero", async (req, res) => {
   }
 });
 
-
 app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
   try {
     const url = "https://cedagro.blogspot.com/p/directorio-cedagro.html";
@@ -1305,7 +1278,10 @@ app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
       const nombre = $(tds[1]).text().trim();
       const correo = $(tds[2]).text().replace(/\s+/g, "").trim();
 
-      if (!cargo.toLowerCase().includes("cargo") && !nombre.toLowerCase().includes("nombre")) {
+      if (
+        !cargo.toLowerCase().includes("cargo") &&
+        !nombre.toLowerCase().includes("nombre")
+      ) {
         directivos.push({ cargo, nombre, correo });
       }
     });
@@ -1317,12 +1293,9 @@ app.get("/directorio_agroecologico_agroindustrial", async (req, res) => {
   }
 });
 
-
-
-
 app.get("/como_registrarse", async (req, res) => {
   try {
-    const url = "https://portal.senasofiaplus.edu.co"; 
+    const url = "https://portal.senasofiaplus.edu.co";
     const { data } = await axios.get(`${url}/index.php/ayudas`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1355,8 +1328,8 @@ app.get("/como_registrarse", async (req, res) => {
 
 app.get("/buscar_programas_formacion", async (req, res) => {
   try {
-    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas"; 
-    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+    const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas";
+    const baseUrl = "https://portal.senasofiaplus.edu.co";
 
     const { data } = await axios.get(url, {
       headers: {
@@ -1384,11 +1357,10 @@ app.get("/buscar_programas_formacion", async (req, res) => {
   }
 });
 
-
 app.get("/inscripcion_programa_formacion", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas";
-    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+    const baseUrl = "https://portal.senasofiaplus.edu.co";
 
     const { data } = await axios.get(url, {
       headers: {
@@ -1419,7 +1391,7 @@ app.get("/inscripcion_programa_formacion", async (req, res) => {
 app.get("/guia_actualizar_datos", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas";
-    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+    const baseUrl = "https://portal.senasofiaplus.edu.co";
 
     const { data } = await axios.get(url, {
       headers: {
@@ -1439,7 +1411,7 @@ app.get("/guia_actualizar_datos", async (req, res) => {
     });
 
     res.json({
-      pasos
+      pasos,
     });
   } catch (error) {
     console.error(error);
@@ -1447,11 +1419,10 @@ app.get("/guia_actualizar_datos", async (req, res) => {
   }
 });
 
-
 app.get("/cambio_contrasena", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas";
-    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+    const baseUrl = "https://portal.senasofiaplus.edu.co";
 
     const { data } = await axios.get(url, {
       headers: {
@@ -1482,7 +1453,7 @@ app.get("/cambio_contrasena", async (req, res) => {
 app.get("/consultar_resultados_pruebas", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/ayudas";
-    const baseUrl = "https://portal.senasofiaplus.edu.co"; 
+    const baseUrl = "https://portal.senasofiaplus.edu.co";
 
     const { data } = await axios.get(url, {
       headers: {
@@ -1527,21 +1498,21 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     const seen = new Set();
     const regex01 = /\/images\/instructivo\/01\/img-[\d-]+\.jpg$/i;
 
-    $('img').each((i, el) => {
-      if (imagenes.length >= 18) return false; 
+    $("img").each((i, el) => {
+      if (imagenes.length >= 18) return false;
       let src =
-        $(el).attr('src') ||
-        $(el).attr('data-src') ||
-        $(el).attr('data-lazy') ||
-        (($(el).attr('srcset') || '').split(',')[0] || '').split(' ')[0];
+        $(el).attr("src") ||
+        $(el).attr("data-src") ||
+        $(el).attr("data-lazy") ||
+        (($(el).attr("srcset") || "").split(",")[0] || "").split(" ")[0];
 
       if (!src) return;
 
-      if (src.startsWith('//')) src = 'https:' + src;
-      if (src.startsWith('/')) src = baseUrl + src;
-      if (!/^https?:\/\//i.test(src)) src = baseUrl + '/' + src;
+      if (src.startsWith("//")) src = "https:" + src;
+      if (src.startsWith("/")) src = baseUrl + src;
+      if (!/^https?:\/\//i.test(src)) src = baseUrl + "/" + src;
 
-      const clean = src.split('?')[0];
+      const clean = src.split("?")[0];
 
       if (!regex01.test(clean)) return;
 
@@ -1552,13 +1523,13 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     });
 
     if (imagenes.length < 18) {
-      $('div.imagens img').each((i, el) => {
+      $("div.imagens img").each((i, el) => {
         if (imagenes.length >= 18) return false;
-        let src = $(el).attr('src') || $(el).attr('data-src') || '';
+        let src = $(el).attr("src") || $(el).attr("data-src") || "";
         if (!src) return;
-        if (src.startsWith('//')) src = 'https:' + src;
-        if (src.startsWith('/')) src = baseUrl + src;
-        const clean = src.split('?')[0];
+        if (src.startsWith("//")) src = "https:" + src;
+        if (src.startsWith("/")) src = baseUrl + src;
+        const clean = src.split("?")[0];
         if (!regex01.test(clean)) return;
         if (!seen.has(clean)) {
           seen.add(clean);
@@ -1573,7 +1544,9 @@ app.get("/inscripcion_programa_titulado", async (req, res) => {
     });
   } catch (error) {
     console.error("scrape error:", error?.message || error);
-    res.status(500).json({ error: "Error al obtener las imágenes del instructivoo" });
+    res
+      .status(500)
+      .json({ error: "Error al obtener las imágenes del instructivoo" });
   }
 });
 
@@ -1649,7 +1622,6 @@ app.get("/directorio_ambiental_ecoturistico", async (req, res) => {
   }
 });
 
-
 app.get("/directorio_agroforestal_acuicola", async (req, res) => {
   try {
     const url = "https://arapaimaregput.blogspot.com/p/directorio.html";
@@ -1668,7 +1640,6 @@ app.get("/directorio_agroforestal_acuicola", async (req, res) => {
         imagenes.push(src);
       }
     });
-
 
     res.json({
       centro: "Centro Agroforestal y Acuícola Arapaima",
@@ -1714,7 +1685,6 @@ app.get("/directorio_cafec", async (req, res) => {
   }
 });
 
-
 app.get("/directorio_gestion_desarrollo", async (req, res) => {
   try {
     const url =
@@ -1727,7 +1697,8 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
     const $ = cheerio.load(data);
     const textoLimpio = $("body").text().replace(/\s+/g, " ").trim();
 
-    const patronCargo = /(SUBDIRECTOR|COORDINADOR(?:A)? [A-ZÁÉÍÓÚÑ\s,\.]+|L[IÍ]DER [A-ZÁÉÍÓÚÑ\s,\.]+|BIENESTAR AL APRENDIZ|CONTRATO DE APRENDIZAJE|SISTEMA DE GESTIÓN DE CALIDAD)/gi;
+    const patronCargo =
+      /(SUBDIRECTOR|COORDINADOR(?:A)? [A-ZÁÉÍÓÚÑ\s,\.]+|L[IÍ]DER [A-ZÁÉÍÓÚÑ\s,\.]+|BIENESTAR AL APRENDIZ|CONTRATO DE APRENDIZAJE|SISTEMA DE GESTIÓN DE CALIDAD)/gi;
 
     const coincidencias = [...textoLimpio.matchAll(patronCargo)];
 
@@ -1755,9 +1726,7 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
 
       const nombre = nombreMatch ? nombreMatch[0].trim() : null;
       const correo = correoMatch ? correoMatch[0].trim() : null;
-      const celular = celularMatch
-        ? celularMatch[0].replace(/\s+/g, "")
-        : null;
+      const celular = celularMatch ? celularMatch[0].replace(/\s+/g, "") : null;
 
       if (cargo && nombre && correo && celular) {
         directivos.push({
@@ -1775,7 +1744,6 @@ app.get("/directorio_gestion_desarrollo", async (req, res) => {
     res.status(500).json({ error: "Error al obtener los datos" });
   }
 });
-
 
 app.get("/directorio_asistencia_tecnica", async (req, res) => {
   try {
@@ -1816,13 +1784,14 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
 
     $("p[style*='padding-left']").each((i, p) => {
       const cargo = $(p).find("b").first().text().trim();
-      const nombre = $(p).find("b[style*='#238276']").text().trim() ||
-                     $(p).find("span[style*='#238276'] b").text().trim();
-
+      const nombre =
+        $(p).find("b[style*='#238276']").text().trim() ||
+        $(p).find("span[style*='#238276'] b").text().trim();
 
       let nextP = $(p).next("p");
-      let altNombre = nextP.find("b[style*='#238276']").text().trim() ||
-                      nextP.find("span[style*='#238276'] b").text().trim();
+      let altNombre =
+        nextP.find("b[style*='#238276']").text().trim() ||
+        nextP.find("span[style*='#238276'] b").text().trim();
 
       const container = nombre ? p : nextP;
 
@@ -1852,7 +1821,8 @@ app.get("/directorio_sector_agropecuario", async (req, res) => {
 
 app.get("/director_regional_risaralda", async (req, res) => {
   try {
-    const url = "https://comerciorisaralda.blogspot.com/p/direccion-regional.html";
+    const url =
+      "https://comerciorisaralda.blogspot.com/p/direccion-regional.html";
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
@@ -1872,10 +1842,9 @@ app.get("/director_regional_risaralda", async (req, res) => {
         .text()
         .trim();
 
-      const imagen = $(el)
-        .nextAll("div.post-body")
-        .find("div.separator img")
-        .attr("src") || "";
+      const imagen =
+        $(el).nextAll("div.post-body").find("div.separator img").attr("src") ||
+        "";
 
       let descripcion = "";
       $(el)
@@ -1884,7 +1853,7 @@ app.get("/director_regional_risaralda", async (req, res) => {
         .each((j, p) => {
           const text = $(p).text().trim();
           if (text && text.length > 50) {
-            descripcion = text; 
+            descripcion = text;
           }
         });
 
@@ -1931,63 +1900,64 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       "Asistente",
     ];
 
-    $("div.post-body").find("div, p, span").each((i, el) => {
-  const texto = $(el).text().replace(/\s+/g, " ").trim();
-  const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
-  if (!correos) return;
+    $("div.post-body")
+      .find("div, p, span")
+      .each((i, el) => {
+        const texto = $(el).text().replace(/\s+/g, " ").trim();
+        const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
+        if (!correos) return;
 
-  correos.forEach((correo) => {
-    const partes = texto.split(correo);
-    const textoAntesCorreo = partes[0];
-    const textoDespuesCorreo = partes[1] ? partes[1].split(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/)[0] : "";
+        correos.forEach((correo) => {
+          const partes = texto.split(correo);
+          const antes = partes[0].trim();
 
-    const regex = new RegExp(
-      `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([^@]+?)\\s*${correo}`
-    );
-    const match = textoAntesCorreo.match(regex) || texto.match(regex);
-    if (!match) return;
+          const regexNombreCargo = new RegExp(
+            `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([A-ZÁÉÍÓÚÑa-záéíóúñ\\s\\-]+)`
+          );
+          const match = antes.match(regexNombreCargo);
+          if (!match) return;
 
-    let nombre = match[1].trim();
-    let cargo = match[2].trim();
+          let nombre = match[1].trim();
+          let cargo = match[2].trim();
 
-    if (cargo.includes(nombre.split(" ")[0])) {
-      cargo = cargo.substring(cargo.indexOf(nombre.split(" ")[0]) + nombre.length).trim();
-    }
+          for (const palabra of palabrasCargo) {
+            const idx = cargo.indexOf(palabra);
+            if (idx > 0) {
+              const posibleApellido = cargo.substring(0, idx).trim();
+              const posibleCargo = cargo.substring(idx).trim();
+              if (posibleApellido.split(" ").length <= 2) {
+                nombre = `${nombre} ${posibleApellido}`;
+                cargo = posibleCargo;
+              }
+              break;
+            }
+          }
 
-    cargo = cargo.replace(/\b(Académico|Académica)\b.*\b(Académico|Académica)\b/, "$1");
+          if (!palabrasCargo.some((p) => cargo.includes(p))) {
+            const encontrado = palabrasCargo.find((p) =>
+              texto.includes(p)
+            );
+            if (encontrado) cargo = encontrado;
+          }
 
-    for (const palabra of palabrasCargo) {
-      const idx = cargo.indexOf(palabra);
-      if (idx > 0) {
-        const posibleApellido = cargo.substring(0, idx).trim();
-        const posibleCargo = cargo.substring(idx).trim();
-        if (posibleApellido.split(" ").length <= 2) {
-          nombre = `${nombre} ${posibleApellido}`;
-          cargo = posibleCargo;
-        }
-        break;
-      }
-    }
+          let imagen = null;
+          const divImagen = $(el).prevAll("div.separator").first();
+          if (divImagen.length) imagen = divImagen.find("img").attr("src");
+          if (!imagen) imagen = $(el).prevAll("img").first().attr("src");
+          if (imagen && !imagen.startsWith("http")) {
+            imagen = `https://blogger.googleusercontent.com/${imagen}`;
+          }
 
-    let imagen = null;
-    const divImagen = $(el).prevAll("div.separator").first();
-    if (divImagen.length) imagen = divImagen.find("img").attr("src");
-    if (!imagen) imagen = $(el).prevAll("img").first().attr("src");
-    if (imagen && !imagen.startsWith("http")) {
-      imagen = `https://blogger.googleusercontent.com/${imagen}`;
-    }
-
-    if (!directorio.some((d) => d.correo === correo)) {
-      directorio.push({
-        nombre,
-        cargo,
-        correo,
-        imagen: imagen || null,
+          if (!directorio.some((d) => d.correo === correo)) {
+            directorio.push({
+              nombre,
+              cargo,
+              correo,
+              imagen: imagen || null,
+            });
+          }
+        });
       });
-    }
-  });
-});
-
 
     if (directorio.length === 0)
       throw new Error("No se encontraron directivos válidos.");
