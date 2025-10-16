@@ -1883,84 +1883,82 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
 
     const $ = cheerio.load(data);
     const directorio = [];
+    const emailRegexGlobal = /[a-zA-Z0-9._%+-]+@sena\.edu\.co/g;
+    const namePatternEnd = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})$/;
 
-    const palabrasCargo = [
-      "Subdirector",
-      "Subdirectora",
-      "Coordinador",
-      "Coordinadora",
-      "Líder",
-      "Apoyo",
-      "Profesional",
-      "Responsable",
-      "Gestor",
-      "Dinamizador",
-      "Dinamizadora",
-      "Unidad",
-      "Asistente",
-    ];
+    $("div.post-body").find("div.separator").each((i, sepEl) => {
+      const imgSrc = $(sepEl).find("img").attr("src") || null;
+      let imagen = imgSrc;
+      if (imagen && !imagen.startsWith("http")) imagen = `https://blogger.googleusercontent.com/${imagen}`;
 
-    $("div.post-body")
-      .find("div, p, span")
-      .each((i, el) => {
-        const texto = $(el).text().replace(/\s+/g, " ").trim();
-        const correos = texto.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g);
-        if (!correos) return;
+      let segmentNodes = [];
+      let node = $(sepEl).next();
+      while (node.length && !node.is("div.separator")) {
+        segmentNodes.push(node);
+        node = node.next();
+      }
 
-        correos.forEach((correo) => {
-          const partes = texto.split(correo);
-          const antes = partes[0].trim();
+      const segmentText = segmentNodes
+        .map((n) => $(n).text())
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-          const regexNombreCargo = new RegExp(
-            `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ]?[a-záéíóúñ]+){1,4})\\s+([A-ZÁÉÍÓÚÑa-záéíóúñ\\s\\-]+)`
-          );
-          const match = antes.match(regexNombreCargo);
-          if (!match) return;
+      const emails = [...(segmentText.match(emailRegexGlobal) || [])];
+      if (emails.length === 0) return;
 
-          let nombre = match[1].trim();
-          let cargo = match[2].trim();
+      let cursor = 0;
+      for (const email of emails) {
+        const idx = segmentText.indexOf(email, cursor);
+        if (idx === -1) continue;
 
-          for (const palabra of palabrasCargo) {
-            const idx = cargo.indexOf(palabra);
-            if (idx > 0) {
-              const posibleApellido = cargo.substring(0, idx).trim();
-              const posibleCargo = cargo.substring(idx).trim();
-              if (posibleApellido.split(" ").length <= 2) {
-                nombre = `${nombre} ${posibleApellido}`;
-                cargo = posibleCargo;
-              }
-              break;
-            }
+        const before = segmentText.slice(0, idx).trim();
+        const after = segmentText.slice(idx + email.length).trim();
+
+        const beforeLimited = before.slice(-200).trim();
+        const nameMatch = beforeLimited.match(namePatternEnd);
+        let nombre = null;
+        let cargo = null;
+
+        if (nameMatch) {
+          nombre = nameMatch[1].trim();
+          cargo = beforeLimited.slice(0, beforeLimited.length - nombre.length).trim();
+        } else {
+          const words = beforeLimited.split(/\s+/).filter(Boolean);
+          if (words.length >= 2) {
+            nombre = words.slice(-2).join(" ");
+            cargo = words.slice(0, -2).join(" ");
+          } else {
+            nombre = beforeLimited || "Sin nombre";
+            cargo = "";
           }
+        }
 
-          if (!palabrasCargo.some((p) => cargo.includes(p))) {
-            const encontrado = palabrasCargo.find((p) =>
-              texto.includes(p)
-            );
-            if (encontrado) cargo = encontrado;
-          }
+        cargo = cargo.replace(/\s{2,}/g, " ").trim();
+        if (!cargo) {
+          const afterLimited = after.split(/[.;\n]/)[0].trim().slice(0, 150);
+          const foundCargo = afterLimited.match(/^(Subdirector|Subdirectora|Coordinador|Coordinadora|Líder|Apoyo|Profesional|Responsable|Gestor|Dinamizador|Dinamizadora|Unidad|Asistente)/i);
+          if (foundCargo) cargo = afterLimited;
+        }
 
-          let imagen = null;
-          const divImagen = $(el).prevAll("div.separator").first();
-          if (divImagen.length) imagen = divImagen.find("img").attr("src");
-          if (!imagen) imagen = $(el).prevAll("img").first().attr("src");
-          if (imagen && !imagen.startsWith("http")) {
-            imagen = `https://blogger.googleusercontent.com/${imagen}`;
-          }
+        nombre = nombre.replace(/\s{2,}/g, " ").trim();
+        cargo = cargo.trim();
+        if (cargo && cargo.length > 0 && /^[a-z]/.test(cargo)) cargo = cargo.charAt(0).toUpperCase() + cargo.slice(1);
 
-          if (!directorio.some((d) => d.correo === correo)) {
-            directorio.push({
-              nombre,
-              cargo,
-              correo,
-              imagen: imagen || null,
-            });
-          }
-        });
-      });
+        if (!directorio.some((d) => d.correo === email)) {
+          directorio.push({
+            nombre: nombre || "Sin nombre",
+            cargo: cargo || "Sin cargo",
+            correo: email,
+            imagen: imagen || null
+          });
+        }
 
-    if (directorio.length === 0)
-      throw new Error("No se encontraron directivos válidos.");
+        cursor = idx + email.length;
+      }
+    });
+
+    if (directorio.length === 0) throw new Error("No se encontraron directivos válidos.");
 
     res.json(directorio);
   } catch (error) {
@@ -1968,6 +1966,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 app.listen(port, () => {
