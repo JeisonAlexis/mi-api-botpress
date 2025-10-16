@@ -1998,7 +1998,7 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     res.json(directorio);
   } catch (error) {
     console.error("❌ Error al obtener el directorio:", error.message);
-    res.status(500).json({ error: "Error al obtener el directoriooo" });
+    res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
 
