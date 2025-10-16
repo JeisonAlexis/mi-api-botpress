@@ -1920,8 +1920,23 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
     const directorio = [];
 
     const textoCrudo = $("div.post-body").text().replace(/\s+/g, " ").trim();
-
     const correos = textoCrudo.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g) || [];
+
+    const palabrasCargo = [
+      "Subdirector",
+      "Subdirectora",
+      "Coordinador",
+      "Coordinadora",
+      "Líder",
+      "Apoyo",
+      "Profesional",
+      "Responsable",
+      "Gestor",
+      "Dinamizador",
+      "Dinamizadora",
+      "Unidad",
+      "Asistente"
+    ];
 
     for (const correo of correos) {
       const regex = new RegExp(
@@ -1932,22 +1947,28 @@ app.get("/directorio_diseno_innovacion_tecnologica", async (req, res) => {
       const match = regex.exec(textoCrudo);
 
       if (match) {
-        const nombre = match[1].trim();
-        const cargo = match[2].trim();
+        let nombre = match[1].trim();
+        let cargo = match[2].trim();
 
-        let imagen = null;
-        $("img").each((_, img) => {
-          const alt = $(img).attr("alt") || "";
-          if (alt.includes(nombre.split(" ")[0])) {
-            imagen = $(img).attr("src");
+        for (const palabra of palabrasCargo) {
+          const idx = cargo.indexOf(palabra);
+          if (idx > 0) {
+            const posibleApellido = cargo.substring(0, idx).trim();
+            const posibleCargo = cargo.substring(idx).trim();
+
+            if (posibleApellido.split(" ").length <= 2) {
+              nombre = `${nombre} ${posibleApellido}`;
+              cargo = posibleCargo;
+            }
+            break;
           }
-        });
+        }
 
         directorio.push({
           nombre,
           cargo,
           correo,
-          imagen,
+          imagen: null,
         });
       }
     }
