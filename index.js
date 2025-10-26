@@ -1939,18 +1939,22 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
 
     $("span[style*='color: #38761d']").each((_, el) => {
       const cargo = $(el).text().trim();
-      let siguiente = $(el);
 
-      const buffer = [];
-      for (let i = 0; i < 10; i++) {
+      let bloqueHTML = "";
+      let siguiente = $(el).parent().next();
+
+      while (
+        siguiente.length &&
+        !siguiente.find("span[style*='color: #38761d']").length &&
+        !siguiente.is("span[style*='color: #38761d']")
+      ) {
+        bloqueHTML += siguiente.text() + " ";
         siguiente = siguiente.next();
-        if (!siguiente.length) break;
-        buffer.push(siguiente.text().trim());
       }
 
-      const textoPlano = buffer.join(" ");
+      const textoPlano = bloqueHTML.replace(/\s+/g, " ").trim();
 
-      const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ\s]{3,}(?=\s|$)/);
+      const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]{2,}/);
       const nombre = nombreMatch ? nombreMatch[0].trim() : "";
 
       const correoMatch = textoPlano.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
@@ -1973,6 +1977,7 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 app.listen(port, () => {
