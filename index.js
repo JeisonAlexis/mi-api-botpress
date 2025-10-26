@@ -1923,10 +1923,6 @@ app.get("/directorio_agropecuario_cauca", async (req, res) => {
   }
 });
 
-
-import axios from "axios";
-import * as cheerio from "cheerio";
-
 app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
   try {
     const { data } = await axios.get(
