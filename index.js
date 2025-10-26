@@ -1924,6 +1924,9 @@ app.get("/directorio_agropecuario_cauca", async (req, res) => {
 });
 
 
+import axios from "axios";
+import * as cheerio from "cheerio";
+
 app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
   try {
     const { data } = await axios.get(
@@ -1936,25 +1939,30 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
     );
 
     const $ = cheerio.load(data);
-
     const directorio = [];
 
     $("span[style*='color: #38761d']").each((_, el) => {
       const cargo = $(el).text().trim();
 
-      let next = $(el).nextAll("span").first();
-      let nombre = next.find("b").first().text().trim();
-      let correo = next.find("span").last().text().trim();
+      const siguienteHTML = [];
+      let siguiente = $(el).next();
 
-      if (!correo.includes("@")) {
-        correo = next.next().text().trim();
+      for (let i = 0; i < 6 && siguiente.length; i++) {
+        siguienteHTML.push($(siguiente).text().trim());
+        siguiente = siguiente.next();
       }
 
-      directorio.push({
-        cargo,
-        nombre,
-        correo,
-      });
+      const textoPlano = siguienteHTML.join(" ");
+
+      const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ\s]+/);
+      const nombre = nombreMatch ? nombreMatch[0].trim() : "";
+
+      const correoMatch = textoPlano.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
+      const correo = correoMatch ? correoMatch[0].trim() : "";
+
+      if (cargo && (nombre || correo)) {
+        directorio.push({ cargo, nombre, correo });
+      }
     });
 
     const filtrado = directorio.filter(
@@ -1965,10 +1973,11 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
 
     res.json(filtrado);
   } catch (error) {
-    console.error(error);
+    console.error("Error al obtener el directorio:", error);
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 
