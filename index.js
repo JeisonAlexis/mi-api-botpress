@@ -1923,6 +1923,7 @@ app.get("/directorio_agropecuario_cauca", async (req, res) => {
   }
 });
 
+
 app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
   try {
     const { data } = await axios.get(
@@ -1942,7 +1943,6 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
       const cargo = $(el).text().trim();
 
       let next = $(el).nextAll("span").first();
-
       let nombre = next.find("b").first().text().trim();
       let correo = next.find("span").last().text().trim();
 
@@ -1957,7 +1957,13 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
       });
     });
 
-    res.json(directorio);
+    const filtrado = directorio.filter(
+      (item) =>
+        item.cargo &&
+        !["CONTACTO:", "SEDE BOSTON:", "SEDE LA GALLERA:"].includes(item.cargo)
+    );
+
+    res.json(filtrado);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener el directorio" });
