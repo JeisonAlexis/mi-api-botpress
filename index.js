@@ -1923,6 +1923,47 @@ app.get("/directorio_agropecuario_cauca", async (req, res) => {
   }
 });
 
+app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://sucresena.blogspot.com/p/directorio_21.html",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
+
+    const $ = cheerio.load(data);
+
+    const directorio = [];
+
+    $("span[style*='color: #38761d']").each((_, el) => {
+      const cargo = $(el).text().trim();
+
+      let next = $(el).nextAll("span").first();
+
+      let nombre = next.find("b").first().text().trim();
+      let correo = next.find("span").last().text().trim();
+
+      if (!correo.includes("@")) {
+        correo = next.next().text().trim();
+      }
+
+      directorio.push({
+        cargo,
+        nombre,
+        correo,
+      });
+    });
+
+    res.json(directorio);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el directorio" });
+  }
+});
+
 
 
 app.listen(port, () => {
