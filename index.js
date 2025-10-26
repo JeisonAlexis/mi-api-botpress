@@ -1939,32 +1939,25 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
 
     $("span[style*='color: #38761d']").each((_, el) => {
       const cargo = $(el).text().trim();
+      let siguiente = $(el);
 
-      const fragmentos = [];
-      let siguiente = $(el).next();
-
-      for (let i = 0; i < 10 && siguiente.length; i++) {
-        fragmentos.push($(siguiente).text().trim());
+      const buffer = [];
+      for (let i = 0; i < 10; i++) {
         siguiente = siguiente.next();
+        if (!siguiente.length) break;
+        buffer.push(siguiente.text().trim());
       }
 
-      const textoPlano = fragmentos.join(" ").replace(/\s+/g, " ").trim();
+      const textoPlano = buffer.join(" ");
 
-      const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ\s]{3,}/);
+      const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ\s]{3,}(?=\s|$)/);
       const nombre = nombreMatch ? nombreMatch[0].trim() : "";
 
-      const correoMatch = textoPlano.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]*sena\.edu\.co/i);
+      const correoMatch = textoPlano.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
       const correo = correoMatch ? correoMatch[0].trim() : "";
 
-      let correoFinal = correo;
-      if (!correoFinal && siguiente.length) {
-        const extraHTML = siguiente.html() || "";
-        const extraMatch = extraHTML.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]*sena\.edu\.co/i);
-        if (extraMatch) correoFinal = extraMatch[0].trim();
-      }
-
-      if (cargo && (nombre || correoFinal)) {
-        directorio.push({ cargo, nombre, correo: correoFinal });
+      if (cargo && (nombre || correo)) {
+        directorio.push({ cargo, nombre, correo });
       }
     });
 
@@ -1976,13 +1969,10 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
 
     res.json(filtrado);
   } catch (error) {
-    console.error("❌ Error al obtener el directorio:", error);
+    console.error("Error al obtener el directorio:", error);
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
-
-
-
 
 
 app.listen(port, () => {
