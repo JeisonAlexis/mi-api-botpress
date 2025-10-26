@@ -1937,42 +1937,44 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
     const $ = cheerio.load(data);
     const directorio = [];
 
-    $("span[style*='color: #38761d']").each((_, el) => {
-      const cargo = $(el).text().trim();
+    $("span[style*='color: #38761d'], span[style*='color:#38761d']").each((_, el) => {
+      const cargo = $(el).text().trim().replace(/:/g, '').trim();
 
-      let bloque = "";
-      let siguiente = $(el).parent().next();
-
-      while (
-        siguiente.length &&
-        !siguiente.find("span[style*='color: #38761d']").length &&
-        !siguiente.is("span[style*='color: #38761d']")
-      ) {
-        bloque += " " + siguiente.html();
-        siguiente = siguiente.next();
+      if (["CONTACTO", "SEDE BOSTON", "SEDE LA GALLERA"].includes(cargo)) {
+        return;
       }
 
-      const textoPlano = bloque.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      let nombre = "";
+      let correo = "";
 
-      const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]{2,}/);
-      const nombre = nombreMatch ? nombreMatch[0].trim() : "";
+      const parent = $(el).parent();
+      const textoCompleto = parent.text();
 
-      const correos = [...textoPlano.matchAll(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g)].map(m => m[0]);
+      const nombreRegex = /([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+[A-ZÁÉÍÓÚÑ])/g;
+      const nombres = textoCompleto.match(nombreRegex);
+      
+      if (nombres && nombres.length > 0) {
+        nombre = nombres.find(n => 
+          !n.includes(cargo) && 
+          n.length > 3 && 
+          n.trim() !== cargo
+        )?.trim() || "";
+      }
 
-      const correo = correos.length ? correos[0] : "";
-
-      if (cargo && (nombre || correo)) {
-        directorio.push({ cargo, nombre, correo });
+      const correoRegex = /([a-zA-Z0-9._%+-]+@sena\.edu\.co)/;
+      const correoMatch = textoCompleto.match(correoRegex);
+      correo = correoMatch ? correoMatch[1].trim() : "";
+      
+      if (nombre || correo) {
+        directorio.push({
+          cargo,
+          nombre,
+          correo
+        });
       }
     });
 
-    const filtrado = directorio.filter(
-      (item) =>
-        item.cargo &&
-        !["CONTACTO:", "SEDE BOSTON:", "SEDE LA GALLERA:"].includes(item.cargo)
-    );
-
-    res.json(filtrado);
+    res.json(directorio);
   } catch (error) {
     console.error("Error al obtener el directorio:", error);
     res.status(500).json({ error: "Error al obtener el directorio" });
