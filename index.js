@@ -1937,45 +1937,34 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
     const $ = cheerio.load(data);
     const directorio = [];
 
-    $("span[style*='color: #38761d'], span[style*='color:#38761d']").each((_, el) => {
-      const cargoCompleto = $(el).text().trim();
-      const cargo = cargoCompleto.replace(/:/g, '').trim();
+    const bodyText = $('.post-body').html();
+    
+    const sections = bodyText.split(/<span[^>]*style="[^"]*color:\s*#38761d[^"]*"[^>]*>/i);
+    
+    sections.forEach((section, index) => {
+      if (index === 0) return; 
+
+      const cargoMatch = section.match(/<b>([^<]+)<\/b>/);
+      if (!cargoMatch) return;
+      
+      const cargo = cargoMatch[1].replace(/:/g, '').trim();
 
       if (!cargo || ["CONTACTO", "SEDE BOSTON", "SEDE LA GALLERA"].includes(cargo)) {
         return;
       }
 
-      let nombre = "";
-      let correo = "";
-
-      let current = $(el).parent();
-      let textosPosteriores = [];
-
-      for (let i = 0; i < 5; i++) {
-        current = current.next();
-        if (current.length === 0) break;
-        
-        const texto = current.text().trim();
-        if (texto && !texto.includes('color: #38761d')) {
-          textosPosteriores.push(texto);
-        } else {
-          break; 
-        }
-      }
+      const textoLimpio = section
+        .replace(/<[^>]+>/g, ' ') 
+        .replace(/\s+/g, ' ') 
+        .trim();
       
-      const textoCompleto = textosPosteriores.join(' ');
-
-      const nombreRegex = /\b([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})+)\b/;
-      const nombreMatch = textoCompleto.match(nombreRegex);
-      if (nombreMatch) {
-        nombre = nombreMatch[1].trim();
-      }
+      const nombreRegex = /\b([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,}){1,5})\b/;
+      const nombreMatch = textoLimpio.match(nombreRegex);
+      const nombre = nombreMatch ? nombreMatch[1].trim() : "";
 
       const correoRegex = /\b([a-z0-9._%+-]+@sena\.edu\.co)\b/i;
-      const correoMatch = textoCompleto.match(correoRegex);
-      if (correoMatch) {
-        correo = correoMatch[1].toLowerCase().trim();
-      }
+      const correoMatch = textoLimpio.match(correoRegex);
+      const correo = correoMatch ? correoMatch[1].toLowerCase().trim() : "";
 
       if (nombre || correo) {
         directorio.push({
