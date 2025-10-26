@@ -1940,7 +1940,7 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
     $("span[style*='color: #38761d']").each((_, el) => {
       const cargo = $(el).text().trim();
 
-      let bloqueHTML = "";
+      let bloque = "";
       let siguiente = $(el).parent().next();
 
       while (
@@ -1948,17 +1948,18 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
         !siguiente.find("span[style*='color: #38761d']").length &&
         !siguiente.is("span[style*='color: #38761d']")
       ) {
-        bloqueHTML += siguiente.text() + " ";
+        bloque += " " + siguiente.html();
         siguiente = siguiente.next();
       }
 
-      const textoPlano = bloqueHTML.replace(/\s+/g, " ").trim();
+      const textoPlano = bloque.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
       const nombreMatch = textoPlano.match(/[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]{2,}/);
       const nombre = nombreMatch ? nombreMatch[0].trim() : "";
 
-      const correoMatch = textoPlano.match(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/);
-      const correo = correoMatch ? correoMatch[0].trim() : "";
+      const correos = [...textoPlano.matchAll(/[a-zA-Z0-9._%+-]+@sena\.edu\.co/g)].map(m => m[0]);
+
+      const correo = correos.length ? correos[0] : "";
 
       if (cargo && (nombre || correo)) {
         directorio.push({ cargo, nombre, correo });
@@ -1977,6 +1978,7 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
     res.status(500).json({ error: "Error al obtener el directorio" });
   }
 });
+
 
 
 
