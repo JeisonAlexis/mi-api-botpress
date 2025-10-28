@@ -1982,6 +1982,51 @@ app.get("/directorio_innovacion_tecnologico_servicio", async (req, res) => {
   }
 });
 
+app.get("/directorio_agropecuario_granja", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://senalagranja.blogspot.com/p/directorio.html",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
+
+    const $ = cheerio.load(data);
+    const directorio = [];
+
+    const postBody = $("#post-body-8647170957707418186");
+    const textoCompleto = postBody.text();
+
+    const patron = /([A-ZÁ-Ú][a-záéíóúñ]+(?:\s+[A-ZÁ-Ú][a-záéíóúñ]+)+)\s+([a-z0-9]+@sena\.edu\.co)/g;
+    
+    let match;
+    while ((match = patron.exec(textoCompleto)) !== null) {
+      const nombre = match[1].trim();
+      const correo = match[2].trim();
+
+      let cargo = 'Sin especificar';
+      const inicioMatch = match.index;
+      const textoAnterior = textoCompleto.substring(Math.max(0, inicioMatch - 200), inicioMatch);
+      
+      if (textoAnterior.includes('Programas')) {
+        const cargosMatch = textoAnterior.match(/Programas[^A-Z]*/);
+        if (cargosMatch) {
+          cargo = cargosMatch[0].trim();
+        }
+      }
+      
+      directorio.push({ nombre, cargo, correo });
+    }
+
+    res.json(directorio);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el directorio" });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
