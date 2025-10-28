@@ -1999,35 +1999,47 @@ app.get("/directorio_agropecuario_granja", async (req, res) => {
     $('span[style*="color: #6aa84f"]').each((i, el) => {
       const texto = $(el).text().trim();
 
-      if ($(el).find('u').length > 0 || texto.includes('Coordinador')) {
+      if ($(el).find('u').length > 0 || texto.includes('Contrato')) {
         return;
       }
 
-      if (texto.length > 10 && !texto.includes('Programas') && !texto.includes('Contrato')) {
+      if (texto.length > 10 && !texto.includes('Programas')) {
         const nombre = texto;
-
         let correo = '';
         let cargo = 'Sin especificar';
+
+        let cargoEncontrado = false;
+        let prevDiv = $(el).closest('div').prevAll('div').first();
+        
+        if (prevDiv.length > 0) {
+          const prevSpan = prevDiv.find('span[style*="color: #6aa84f"]');
+          if (prevSpan.length > 0 && prevSpan.find('u').length > 0) {
+            cargo = prevSpan.text().trim();
+            cargoEncontrado = true;
+          }
+        }
 
         let currentDiv = $(el).closest('div');
         let nextDivs = currentDiv.nextAll('div').slice(0, 3);
         
         nextDivs.each((j, nextDiv) => {
           const divText = $(nextDiv).text().trim();
-
+          
           if (divText.includes('@sena.edu.co') && !correo) {
             const emailMatch = divText.match(/([a-z0-9]+@sena\.edu\.co)/);
             if (emailMatch) {
               correo = emailMatch[1];
             }
           }
-
-          const courierSpan = $(nextDiv).find('span[style*="font-family: courier"]');
-          if (courierSpan.length > 0) {
-            cargo = courierSpan.text().trim();
+          
+          if (!cargoEncontrado) {
+            const courierSpan = $(nextDiv).find('span[style*="font-family: courier"]');
+            if (courierSpan.length > 0) {
+              cargo = courierSpan.text().trim();
+            }
           }
         });
-
+        
         if (correo) {
           directorio.push({
             nombre,
