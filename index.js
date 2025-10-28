@@ -2008,38 +2008,46 @@ app.get("/directorio_agropecuario_granja", async (req, res) => {
         let correo = '';
         let cargo = 'Sin especificar';
 
-        let cargoEncontrado = false;
-        let prevDiv = $(el).closest('div').prevAll('div').first();
-        
-        if (prevDiv.length > 0) {
+        let currentDiv = $(el).closest('div');
+        let allPrevDivs = currentDiv.parent().find('div');
+        let currentIndex = allPrevDivs.index(currentDiv);
+
+        for (let idx = currentIndex - 1; idx >= 0; idx--) {
+          const prevDiv = allPrevDivs.eq(idx);
           const prevSpan = prevDiv.find('span[style*="color: #6aa84f"]');
-          if (prevSpan.length > 0 && prevSpan.find('u').length > 0) {
-            cargo = prevSpan.text().trim();
-            cargoEncontrado = true;
+          
+          if (prevSpan.length > 0) {
+            const prevTexto = prevSpan.text().trim();
+            if (prevSpan.find('u').length > 0 && prevTexto.includes('Coordinador')) {
+              cargo = prevTexto;
+              break;
+            }
+            if (prevTexto.length > 10 && !prevTexto.includes('Coordinador')) {
+              break;
+            }
           }
         }
 
-        let currentDiv = $(el).closest('div');
         let nextDivs = currentDiv.nextAll('div').slice(0, 3);
         
         nextDivs.each((j, nextDiv) => {
           const divText = $(nextDiv).text().trim();
-          
+
           if (divText.includes('@sena.edu.co') && !correo) {
             const emailMatch = divText.match(/([a-z0-9]+@sena\.edu\.co)/);
             if (emailMatch) {
               correo = emailMatch[1];
             }
           }
-          
-          if (!cargoEncontrado) {
+
+          if (cargo === 'Sin especificar') {
             const courierSpan = $(nextDiv).find('span[style*="font-family: courier"]');
             if (courierSpan.length > 0) {
               cargo = courierSpan.text().trim();
             }
           }
         });
-        
+
         if (correo) {
           directorio.push({
             nombre,
