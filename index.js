@@ -2008,27 +2008,29 @@ app.get("/directorio_agropecuario_granja", async (req, res) => {
         let correo = '';
         let cargo = 'Sin especificar';
 
-        let currentDiv = $(el).closest('div');
-        let allPrevDivs = currentDiv.parent().find('div');
-        let currentIndex = allPrevDivs.index(currentDiv);
+        const postBody = $('#post-body-8647170957707418186');
+        const allGreenSpans = postBody.find('span[style*="color: #6aa84f"]');
+        const currentSpanIndex = allGreenSpans.index(el);
 
-        for (let idx = currentIndex - 1; idx >= 0; idx--) {
-          const prevDiv = allPrevDivs.eq(idx);
-          const prevSpan = prevDiv.find('span[style*="color: #6aa84f"]');
-          
-          if (prevSpan.length > 0) {
-            const prevTexto = prevSpan.text().trim();
-            if (prevSpan.find('u').length > 0 && prevTexto.includes('Coordinador')) {
-              cargo = prevTexto;
-              break;
-            }
-            if (prevTexto.length > 10 && !prevTexto.includes('Coordinador')) {
-              break;
-            }
+        for (let idx = currentSpanIndex - 1; idx >= 0; idx--) {
+          const prevSpan = allGreenSpans.eq(idx);
+          const prevTexto = prevSpan.text().trim();
+
+          if (prevSpan.find('u').length > 0 && prevTexto.includes('Coordinador')) {
+            cargo = prevTexto;
+            break;
+          }
+
+          if (prevTexto.length > 10 && 
+              !prevTexto.includes('Coordinador') && 
+              !prevTexto.includes('Programas') &&
+              prevSpan.find('u').length === 0) {
+            break;
           }
         }
 
-        let nextDivs = currentDiv.nextAll('div').slice(0, 3);
+        let currentDiv = $(el).closest('div');
+        let nextDivs = currentDiv.nextAll('div').slice(0, 5); 
         
         nextDivs.each((j, nextDiv) => {
           const divText = $(nextDiv).text().trim();
