@@ -1995,6 +1995,7 @@ app.get("/directorio_agropecuario_granja", async (req, res) => {
 
     const $ = cheerio.load(data);
     const directorio = [];
+    let contadorPersonas = 0;
 
     $('span[style*="color: #6aa84f"]').each((i, el) => {
       const texto = $(el).text().trim();
@@ -2008,33 +2009,40 @@ app.get("/directorio_agropecuario_granja", async (req, res) => {
         let correo = '';
         let cargo = 'Sin especificar';
 
-        const postBody = $('#post-body-8647170957707418186');
-        const allGreenSpans = postBody.find('span[style*="color: #6aa84f"]');
-        const currentSpanIndex = allGreenSpans.index(el);
+        contadorPersonas++;
+        if (contadorPersonas === 1) {
+          cargo = 'Dirección Regional';
+        } else if (contadorPersonas === 2) {
+          cargo = 'Subdirección del Centro';
+        } else {
+          const postBody = $('#post-body-8647170957707418186');
+          const allGreenSpans = postBody.find('span[style*="color: #6aa84f"]');
+          const currentSpanIndex = allGreenSpans.index(el);
 
-        for (let idx = currentSpanIndex - 1; idx >= 0; idx--) {
-          const prevSpan = allGreenSpans.eq(idx);
-          const prevTexto = prevSpan.text().trim();
+          for (let idx = currentSpanIndex - 1; idx >= 0; idx--) {
+            const prevSpan = allGreenSpans.eq(idx);
+            const prevTexto = prevSpan.text().trim();
 
-          if (prevSpan.find('u').length > 0 && prevTexto.includes('Coordinador')) {
-            cargo = prevTexto;
-            break;
-          }
+            if (prevSpan.find('u').length > 0 && prevTexto.includes('Coordinador')) {
+              cargo = prevTexto;
+              break;
+            }
 
-          if (prevTexto.length > 10 && 
-              !prevTexto.includes('Coordinador') && 
-              !prevTexto.includes('Programas') &&
-              prevSpan.find('u').length === 0) {
-            break;
+            if (prevTexto.length > 10 && 
+                !prevTexto.includes('Coordinador') && 
+                !prevTexto.includes('Programas') &&
+                prevSpan.find('u').length === 0) {
+              break;
+            }
           }
         }
 
         let currentDiv = $(el).closest('div');
-        let nextDivs = currentDiv.nextAll('div').slice(0, 5); 
+        let nextDivs = currentDiv.nextAll('div').slice(0, 5);
         
         nextDivs.each((j, nextDiv) => {
           const divText = $(nextDiv).text().trim();
-
+          
           if (divText.includes('@sena.edu.co') && !correo) {
             const emailMatch = divText.match(/([a-z0-9]+@sena\.edu\.co)/);
             if (emailMatch) {
