@@ -2091,7 +2091,6 @@ app.get("/directivos_generales_sena", async (req, res) => {
 
     const directivos = [];
 
-    // Mapeo de los identificadores con los cargos correspondientes
     const cargosMap = {
       'a': 'Director General',
       'b': 'Directora Administrativa y Financiera (e)',
