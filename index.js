@@ -2076,6 +2076,81 @@ app.get("/directorio_agropecuario_granja", async (req, res) => {
 });
 
 
+app.get("/directivos_generales_sena", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://www.sena.edu.co/es-co/Noticias/Paginas/directivos/index2.aspx",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+        },
+      }
+    );
+
+    const $ = cheerio.load(data);
+
+    const directivos = [];
+
+    // Mapeo de los identificadores con los cargos correspondientes
+    const cargosMap = {
+      'a': 'Director General',
+      'b': 'Directora Administrativa y Financiera (e)',
+      'c': 'Directora de Empleo y Trabajo (e)',
+      'd': 'Directora de Formación Profesional',
+      'e': 'Directora de Planeación y Direccionamiento Corporativo',
+      'f': 'Director de Promoción y Relaciones Corporativas',
+      'g': 'Directora Jurídica',
+      'h': 'Directora del Sistema Nacional de Formación para el Trabajo',
+      'i': 'Jefe Oficina de Comunicaciones',
+      'j': 'Jefe Oficina de Control Interno',
+      'k': 'Jefe Oficina Control Interno Disciplinario',
+      'l': 'Jefe Oficina de Sistemas (e)',
+      'm': 'Secretaria General'
+    };
+
+    Object.keys(cargosMap).forEach(id => {
+      const elemento = $(`#${id}`);
+      
+      if (elemento.length) {
+        const nombre = elemento.find('.font20').first().text().trim();
+        const cargo = elemento.find('.font14').first().text().trim();
+        const descripcion = elemento.find('.justify').text().trim();
+
+        const imagenElement = $(`#ima_${id} img`);
+        const imagen = imagenElement.attr('src');
+        const imagenAlt = imagenElement.attr('alt');
+
+        let imagenUrl = imagen;
+        if (imagen && !imagen.startsWith('http')) {
+          imagenUrl = `https://www.sena.edu.co/es-co/Noticias/Paginas/directivos/${imagen}`;
+        }
+
+        directivos.push({
+          id,
+          nombre,
+          cargo,
+          descripcion: descripcion.substring(0, 500) + '...', 
+          imagen: imagenUrl,
+          imagenAlt
+        });
+      }
+    });
+
+    res.json({
+      total: directivos.length,
+      directivos: directivos
+    });
+
+  } catch (error) {
+    console.error('Error al obtener los directivos:', error.message);
+    res.status(500).json({ 
+      error: "Error al obtener el directorio de directivos",
+      detalle: error.message 
+    });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
