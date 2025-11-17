@@ -2129,7 +2129,7 @@ app.get("/directivos_generales_sena", async (req, res) => {
           id,
           nombre,
           cargo,
-          descripcion: descripcion.substring(0, 500) + '...', 
+          descripcion: descripcion.substring(0, 5000), 
           imagen: imagenUrl,
           imagenAlt
         });
