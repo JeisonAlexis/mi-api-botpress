@@ -2150,6 +2150,115 @@ app.get("/directivos_generales_sena", async (req, res) => {
 });
 
 
+app.get("/directores_regionales_sena", async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      "https://www.sena.edu.co/es-co/Noticias/Paginas/directivos/sub2.aspx",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Botpress/1.0)",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "es-ES,es;q=0.8,en;q=0.5",
+          "Connection": "keep-alive"
+        },
+        timeout: 10000
+      }
+    );
+
+    const $ = cheerio.load(data);
+
+    const directoresRegionales = [];
+
+    const regionalesMap = {
+      '1': 'Amazonas',
+      '2': 'Antioquia', 
+      '3': 'Arauca',
+      '4': 'Atlántico',
+      '5': 'Bolívar',
+      '6': 'Boyacá',
+      '7': 'Caldas',
+      '8': 'Caquetá',
+      '9': 'Casanare',
+      '10': 'Cauca',
+      '11': 'Cesar',
+      '12': 'Chocó',
+      '13': 'Córdoba',
+      '14': 'Cundinamarca',
+      '15': 'Distrito Capital',
+      '16': 'Guainía',
+      '17': 'Guajira',
+      '18': 'Guaviare',
+      '19': 'Huila',
+      '20': 'Magdalena',
+      '21': 'Meta',
+      '22': 'Nariño',
+      '23': 'Norte de Santander',
+      '24': 'Putumayo',
+      '25': 'Quindío',
+      '26': 'Risaralda',
+      '27': 'San Andrés',
+      '28': 'Santander',
+      '29': 'Sucre',
+      '30': 'Tolima',
+      '31': 'Valle del Cauca',
+      '32': 'Vaupés',
+      '33': 'Vichada'
+    };
+
+    for (const id of Object.keys(regionalesMap)) {
+      const elemento = $(`#${id}`);
+      
+      if (elemento.length > 0) {
+        const nombre = elemento.find('.font20').first().text().trim() || 'No disponible';
+        const cargo = elemento.find('.font14').first().text().trim() || 'No disponible';
+        const descripcion = elemento.find('.justify').text().trim() || 'No hay descripción disponible';
+
+        const imagenElement = $(`#ima_${id} img`);
+        const imagen = imagenElement.attr('src');
+        const imagenAlt = imagenElement.attr('alt') || `Foto de ${nombre}`;
+
+        let imagenUrl = null;
+        if (imagen) {
+          imagenUrl = imagen.startsWith('http') ? imagen : `https://www.sena.edu.co/es-co/Noticias/Paginas/directivos/${imagen}`;
+        }
+
+        directoresRegionales.push({
+          id: parseInt(id),
+          regional: regionalesMap[id],
+          nombre,
+          cargo,
+          descripcion,
+          imagen: imagenUrl,
+          imagenAlt,
+          fechaExtraccion: new Date().toISOString()
+        });
+      }
+    }
+
+    directoresRegionales.sort((a, b) => a.id - b.id);
+
+    res.json({
+      total: directoresRegionales.length,
+      regionalesObtenidas: directoresRegionales.length,
+      fechaConsulta: new Date().toISOString(),
+      directoresRegionales: directoresRegionales
+    });
+
+  } catch (error) {
+    console.error('Error al obtener los directores regionales:', error.message);
+
+    const errorInfo = {
+      error: "Error al obtener el directorio de directores regionales",
+      detalle: error.message,
+      codigo: error.code,
+      fecha: new Date().toISOString()
+    };
+
+    res.status(500).json(errorInfo);
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
