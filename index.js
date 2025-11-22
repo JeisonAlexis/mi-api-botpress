@@ -2271,10 +2271,8 @@ app.get("/terminos_condiciones_detallados", async (req, res) => {
 
     const $ = cheerio.load(data);
 
-    // Método directo: capturar por selectores específicos
     const contenido = [];
 
-    // Capturar todos los elementos en orden
     $('h3, p, ul, ol').each((index, element) => {
       const tagName = $(element).prop('tagName').toLowerCase();
       
