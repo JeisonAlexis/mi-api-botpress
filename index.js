@@ -2327,7 +2327,7 @@ app.get("/terminos_condiciones_detallados", async (req, res) => {
       const textoCompleto = $('body').text()
         .replace(/\s+/g, ' ')
         .trim()
-        .substring(0, 10000); 
+        .substring(0, 100000); 
       
       terminos.contenido = {
         textoCompleto: textoCompleto,
