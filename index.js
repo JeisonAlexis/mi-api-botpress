@@ -2278,7 +2278,7 @@ app.get("/terminos_condiciones_detallados", async (req, res) => {
       titulo: "Términos y Condiciones SENA",
       urlOrigen: url,
       fechaExtraccion: new Date().toISOString(),
-      contenido: {}
+      contenido: []
     };
 
     const secciones = [];
@@ -2286,18 +2286,20 @@ app.get("/terminos_condiciones_detallados", async (req, res) => {
     $('h3').each((index, element) => {
       const titulo = $(element).text().trim();
       const contenido = [];
-
+      
       let nextElement = $(element).next();
       while (nextElement.length > 0 && !nextElement.is('h3')) {
-        if (nextElement.is('p')) {
+        const tagName = nextElement.prop('tagName');
+        
+        if (tagName === 'P') {
           const texto = nextElement.text().trim().replace(/\s+/g, ' ');
-          if (texto) {
+          if (texto && texto.length > 10) { 
             contenido.push({
               tipo: 'parrafo',
               texto: texto
             });
           }
-        } else if (nextElement.is('ul') || nextElement.is('ol')) {
+        } else if (tagName === 'UL' || tagName === 'OL') {
           const items = [];
           nextElement.find('li').each((i, li) => {
             const itemTexto = $(li).text().trim().replace(/\s+/g, ' ');
@@ -2307,43 +2309,69 @@ app.get("/terminos_condiciones_detallados", async (req, res) => {
           });
           if (items.length > 0) {
             contenido.push({
-              tipo: nextElement.is('ul') ? 'lista' : 'lista_ordenada',
+              tipo: tagName === 'UL' ? 'lista' : 'lista_ordenada',
               items: items
             });
           }
         }
+        
         nextElement = nextElement.next();
       }
 
-      secciones.push({
-        titulo: titulo,
-        contenido: contenido
-      });
+      if (titulo || contenido.length > 0) {
+        secciones.push({
+          titulo: titulo,
+          contenido: contenido
+        });
+      }
     });
 
-    terminos.contenido = secciones;
-
     if (secciones.length === 0) {
-      const textoCompleto = $('body').text()
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 100000); 
+      const contenidoCompleto = [];
+
+      $('p').each((i, el) => {
+        const texto = $(el).text().trim().replace(/\s+/g, ' ');
+        if (texto && texto.length > 20) {
+          contenidoCompleto.push({
+            tipo: 'parrafo',
+            texto: texto
+          });
+        }
+      });
       
-      terminos.contenido = {
-        textoCompleto: textoCompleto,
-        advertencia: "Estructura no reconocida, mostrando texto completo"
-      };
+      $('ul, ol').each((i, el) => {
+        const items = [];
+        $(el).find('li').each((liIndex, li) => {
+          const itemTexto = $(li).text().trim().replace(/\s+/g, ' ');
+          if (itemTexto) {
+            items.push(itemTexto);
+          }
+        });
+        if (items.length > 0) {
+          contenidoCompleto.push({
+            tipo: $(el).is('ul') ? 'lista' : 'lista_ordenada',
+            items: items
+          });
+        }
+      });
+      
+      secciones.push({
+        titulo: "Contenido Completo",
+        contenido: contenidoCompleto
+      });
     }
+
+    terminos.contenido = secciones;
 
     res.json({
       success: true,
       totalSecciones: secciones.length,
+      totalElementos: secciones.reduce((acc, sec) => acc + sec.contenido.length, 0),
       datos: terminos
     });
 
   } catch (error) {
     console.error('Error al obtener términos y condiciones detallados:', error.message);
-
 
     res.json({
       success: false,
