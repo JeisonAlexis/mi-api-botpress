@@ -2259,6 +2259,102 @@ app.get("/directores_regionales_sena", async (req, res) => {
 });
 
 
+app.get("/terminos-condiciones-detallados", async (req, res) => {
+  try {
+    const url = "https://portal.senasofiaplus.edu.co/index.php/seguridad"; 
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache"
+      },
+      timeout: 20000
+    });
+
+    const $ = cheerio.load(data);
+
+    const terminos = {
+      titulo: "Términos y Condiciones SENA",
+      urlOrigen: url,
+      fechaExtraccion: new Date().toISOString(),
+      contenido: {}
+    };
+
+    const secciones = [];
+
+    $('h3').each((index, element) => {
+      const titulo = $(element).text().trim();
+      const contenido = [];
+
+      let nextElement = $(element).next();
+      while (nextElement.length > 0 && !nextElement.is('h3')) {
+        if (nextElement.is('p')) {
+          const texto = nextElement.text().trim().replace(/\s+/g, ' ');
+          if (texto) {
+            contenido.push({
+              tipo: 'parrafo',
+              texto: texto
+            });
+          }
+        } else if (nextElement.is('ul') || nextElement.is('ol')) {
+          const items = [];
+          nextElement.find('li').each((i, li) => {
+            const itemTexto = $(li).text().trim().replace(/\s+/g, ' ');
+            if (itemTexto) {
+              items.push(itemTexto);
+            }
+          });
+          if (items.length > 0) {
+            contenido.push({
+              tipo: nextElement.is('ul') ? 'lista' : 'lista_ordenada',
+              items: items
+            });
+          }
+        }
+        nextElement = nextElement.next();
+      }
+
+      secciones.push({
+        titulo: titulo,
+        contenido: contenido
+      });
+    });
+
+    terminos.contenido = secciones;
+
+    if (secciones.length === 0) {
+      const textoCompleto = $('body').text()
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 10000); 
+      
+      terminos.contenido = {
+        textoCompleto: textoCompleto,
+        advertencia: "Estructura no reconocida, mostrando texto completo"
+      };
+    }
+
+    res.json({
+      success: true,
+      totalSecciones: secciones.length,
+      datos: terminos
+    });
+
+  } catch (error) {
+    console.error('Error al obtener términos y condiciones detallados:', error.message);
+
+
+    res.json({
+      success: false,
+      error: error.message,
+      datos: terminosEstaticos,
+      fechaConsulta: new Date().toISOString()
+    });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
