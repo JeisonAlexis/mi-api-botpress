@@ -2259,7 +2259,7 @@ app.get("/directores_regionales_sena", async (req, res) => {
 });
 
 
-app.get("/terminos-condiciones-detallados", async (req, res) => {
+app.get("/terminos_condiciones_detallados", async (req, res) => {
   try {
     const url = "https://portal.senasofiaplus.edu.co/index.php/seguridad"; 
     const { data } = await axios.get(url, {
