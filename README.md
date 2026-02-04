@@ -79,3 +79,12 @@ npm start
 ```bash
 http://localhost:3000
 ```
+
+---
+
+**Autor**
+- Jeison Alexis Rodriguez Angarita 🙍‍♂️
+- Proyecto Productivo / Tecnologo ADSO (Analisis y Desarrollo de Software / SENA 👨‍🎓
+- 2025 📅 
+
+
