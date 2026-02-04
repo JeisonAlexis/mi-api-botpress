@@ -56,20 +56,20 @@ Respuesta inteligente al usuario
 
 - Uso de la API por Botpress Cloud
 <div align="center">
-  <img src="images/1.png" width="400" />
-  <img src="images/2.png" width="400" />
- <img src="images/3.png" width="400" />
+  <img src="images/1.png" width="500" />
+  <img src="images/2.png" width="500" />
+ <img src="images/3.png" width="500" />
 </div>
 
 - JSON capturado por la API
 <div align="center">
-  <img src="images/4.png" width="400" />
+  <img src="images/4.png" width="500" />
 </div>
 
 - Como Botpress Cloud Transforma el JSON
 <div align="center">
-  <img src="images/5.png" width="400" />
-  <img src="images/6.png" width="400" />
+  <img src="images/5.png" width="500" />
+  <img src="images/6.png" width="500" />
 </div>
 
 ---
@@ -107,6 +107,7 @@ http://localhost:3000
 - Jeison Alexis Rodriguez Angarita 🙍‍♂️
 - Proyecto Productivo / Tecnologo ADSO (Analisis y Desarrollo de Software / SENA 👨‍🎓
 - 2025 📅 
+
 
 
 
